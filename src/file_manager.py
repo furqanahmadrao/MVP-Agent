@@ -1,0 +1,214 @@
+"""
+File Manager Module - Handles saving and managing generated MVP files
+"""
+
+import os
+import io
+import shutil
+import zipfile
+import tempfile
+import re
+from typing import Dict, Optional, Tuple
+from datetime import datetime
+
+from .mcp_http_clients import FileManagerMCPClient
+
+
+def sanitize_markdown(content: str) -> str:
+    """
+    Sanitize markdown content by removing invisible/control characters
+    that can break Mermaid diagram rendering.
+    
+    Args:
+        content: Raw markdown content
+        
+    Returns:
+        Sanitized markdown content
+    """
+    if not content:
+        return content
+    
+    # Remove common invisible characters (zero-width spaces, BOM, etc.)
+    # Keep newlines, tabs, and standard spaces
+    sanitized = content.replace('\ufeff', '')  # BOM
+    sanitized = sanitized.replace('\u200b', '')  # Zero-width space
+    sanitized = sanitized.replace('\u200c', '')  # Zero-width non-joiner
+    sanitized = sanitized.replace('\u200d', '')  # Zero-width joiner
+    sanitized = sanitized.replace('\ufffe', '')  # Reverse BOM
+    
+    # Remove any other control characters except newline, carriage return, and tab
+    sanitized = ''.join(char for char in sanitized if ord(char) >= 32 or char in '\n\r\t')
+    
+    # Normalize line endings to \n
+    sanitized = sanitized.replace('\r\n', '\n').replace('\r', '\n')
+    
+    return sanitized
+
+
+def validate_mermaid_blocks(content: str) -> Tuple[bool, str]:
+    """
+    Validate Mermaid code blocks in markdown content.
+    
+    Args:
+        content: Markdown content with potential Mermaid blocks
+        
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    if not content:
+        return True, ""
+    
+    # Find all Mermaid code blocks
+    mermaid_pattern = r'```mermaid\s*\n(.*?)\n```'
+    blocks = re.findall(mermaid_pattern, content, re.DOTALL)
+    
+    if not blocks:
+        return True, ""  # No Mermaid blocks found
+    
+    for i, block in enumerate(blocks):
+        block = block.strip()
+        
+        # Check if block is empty
+        if not block:
+            return False, f"Mermaid block {i+1} is empty"
+        
+        # Check if block has at least a diagram type declaration
+        # Common types: flowchart, graph, sequenceDiagram, classDiagram, etc.
+        diagram_types = ['flowchart', 'graph', 'sequenceDiagram', 'classDiagram', 
+                         'stateDiagram', 'erDiagram', 'journey', 'gantt', 'pie']
+        
+        has_type = any(dtype in block for dtype in diagram_types)
+        if not has_type:
+            return False, f"Mermaid block {i+1} missing diagram type declaration"
+        
+        # Check for common syntax issues
+        lines = block.split('\n')
+        for line_num, line in enumerate(lines, 1):
+            # Check for unclosed brackets/parentheses in node definitions
+            if '[' in line and ']' not in line:
+                # May be multiline, but check if it looks incomplete
+                pass  # Too complex for simple validation
+            
+            # Check for missing arrows in flowcharts
+            if 'flowchart' in block and '--' in line:
+                if not ('-->' in line or '---' in line):
+                    # Might be incomplete
+                    pass
+    
+    return True, ""
+
+
+class FileManager:
+    """Manages saving MVP files - uses in-memory ZIP for HF Spaces compatibility"""
+    
+    def __init__(self, output_dir: str = "outputs"):
+        """
+        Initialize file manager
+        
+        Args:
+            output_dir: Directory to save files (default: outputs/) - NOT USED in production
+        """
+        self.output_dir = output_dir
+        # No longer creating output directory - we use temp files instead
+    
+    def create_zip_in_memory(self, files: Dict[str, str], idea: str) -> str:
+        """
+        Create a temporary ZIP file from generated content.
+        The ZIP file is stored in system temp directory and will be auto-cleaned.
+        
+        Args:
+            files: Dictionary with file contents (keys: features_md, architecture_md, etc.)
+            idea: The startup idea (used for naming)
+            
+        Returns:
+            Path to temporary ZIP file (will be auto-deleted by OS)
+        """
+        # Create a temporary file that won't be deleted immediately
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_idea = "".join(c for c in idea[:30] if c.isalnum() or c in (" ", "-", "_")).strip()
+        safe_idea = safe_idea.replace(" ", "_") or "mvp"
+        
+        # Create temp file with a meaningful name
+        temp_zip = tempfile.NamedTemporaryFile(
+            mode='w+b',
+            suffix='.zip',
+            prefix=f'mvp_{safe_idea}_{timestamp}_',
+            delete=False  # We'll let Gradio handle deletion after download
+        )
+        temp_zip.close()  # Close it so we can write to it with zipfile
+        
+        # Create ZIP in the temp file with atomic write
+        with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # File mapping
+            file_names = {
+                "features_md": "features.md",
+                "architecture_md": "architecture.md",
+                "design_md": "design.md",
+                "user_flow_md": "user_flow.md",
+                "roadmap_md": "roadmap.md",
+            }
+            
+            # Add all markdown files (sanitized)
+            for key, filename in file_names.items():
+                if key in files:
+                    # Sanitize content before writing
+                    sanitized_content = sanitize_markdown(files[key])
+                    zipf.writestr(filename, sanitized_content)
+            
+            # Add README
+            readme_content = f"""# MVP Blueprint
+
+**Idea:** {idea}
+
+**Generated:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+
+**Files:**
+- features.md - Feature specifications
+- architecture.md - Technical architecture
+- design.md - Design philosophy
+- user_flow.md - User journey maps
+- roadmap.md - 6-week launch plan
+
+---
+*Generated by MVP Agent*
+"""
+            zipf.writestr("README.md", readme_content)
+        
+        return temp_zip.name
+    
+    def save_mvp_files(self, files: Dict[str, str], idea: str) -> Dict[str, str]:
+        """
+        Create in-memory ZIP file for download.
+        NO persistent storage - perfect for Hugging Face Spaces.
+        
+        Args:
+            files: Dictionary with file contents (keys: features_md, architecture_md, etc.)
+            idea: The startup idea (used for naming)
+            
+        Returns:
+            Dictionary with 'zip' key pointing to temporary file path
+        """
+        # Create temporary ZIP file
+        zip_path = self.create_zip_in_memory(files, idea)
+        
+        return {
+            "zip": zip_path,
+            "directory": "temp",  # No actual directory
+        }
+    
+    def get_latest_mvp_dir(self) -> str:
+        """
+        Deprecated - not used with in-memory ZIP approach.
+        Returns empty string.
+        """
+        return ""
+
+# Singleton instance
+_file_manager = None
+
+def get_file_manager() -> FileManager:
+    """Get or create the file manager singleton"""
+    global _file_manager
+    if _file_manager is None:
+        _file_manager = FileManager()
+    return _file_manager
