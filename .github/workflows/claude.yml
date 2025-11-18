@@ -30,6 +30,55 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Set environment variables
+        run: |
+          echo "RUNNER_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "PATH=$HOME/.bun/bin:$PATH" >> $GITHUB_ENV
+          echo "✓ Environment variables set"
+          echo "  RUNNER_WORKSPACE=${{ github.workspace }}"
+          echo "  PATH includes: $HOME/.bun/bin"
+
+      - name: Create slash-commands directory
+        run: |
+          # Create the expected slash-commands directory path that the claude-code-action expects
+          SLASH_COMMANDS_DIR="${RUNNER_WORKSPACE}/_actions/anthropics/claude-code-action/beta/slash-commands"
+          echo "Checking for slash-commands directory: $SLASH_COMMANDS_DIR"
+          
+          if [ ! -d "$SLASH_COMMANDS_DIR" ]; then
+            echo "Creating slash-commands directory..."
+            mkdir -p "$SLASH_COMMANDS_DIR"
+            echo "✓ Directory created: $SLASH_COMMANDS_DIR"
+          else
+            echo "✓ Directory already exists: $SLASH_COMMANDS_DIR"
+          fi
+
+      - name: Truncate large prompt files
+        run: |
+          # Find and truncate prompt/transcript files larger than 10KB to prevent Bun runtime errors
+          MAX_SIZE=10000
+          TRUNCATE_TO=8000
+          
+          echo "Scanning workspace for large prompt/transcript files..."
+          find . -type f \( -iname "*prompt*" -o -iname "*transcript*" \) -size +${MAX_SIZE}c 2>/dev/null | while read -r file; do
+            file_size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+            echo "⚠️  Found large file: $file (${file_size} bytes)"
+            
+            if [ "$file_size" -gt "$MAX_SIZE" ]; then
+              # Create backup
+              cp "$file" "${file}.bak"
+              
+              # Truncate the file
+              head -c $TRUNCATE_TO "$file" > "${file}.tmp"
+              echo -e "\n\n[CI NOTICE: File truncated from ${file_size} bytes to ${TRUNCATE_TO} bytes to prevent runtime errors]" >> "${file}.tmp"
+              mv "${file}.tmp" "$file"
+              
+              new_size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+              echo "✓ Truncated $file from ${file_size} bytes to ${new_size} bytes"
+            fi
+          done
+          
+          echo "✓ Prompt file scan complete"
+
       - name: Setup Claude Code Router
         run: |
           curl -fsSL https://bun.sh/install | bash
@@ -61,9 +110,15 @@ jobs:
 
       - name: Start Claude Code Router
         run: |
+          echo "Starting Claude Code Router..."
+          echo "Bun path: $(which bunx || echo 'bunx not found in PATH')"
           nohup ~/.bun/bin/bunx @musistudio/claude-code-router@latest start &
           sleep 5
-          curl -f http://localhost:3456/health 2>/dev/null || echo "⚠️ Health check failed"
+          if curl -f http://localhost:3456/health 2>/dev/null; then
+            echo "✓ Claude Code Router health check passed"
+          else
+            echo "⚠️ Health check failed - router may not be running"
+          fi
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
