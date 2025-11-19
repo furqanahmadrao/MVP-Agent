@@ -56,6 +56,7 @@ jobs:
             }
           }
           EOF
+          echo "✅ Router configured"
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
@@ -63,12 +64,17 @@ jobs:
         run: |
           nohup ~/.bun/bin/bunx @musistudio/claude-code-router@latest start &
           sleep 5
-          curl -f http://localhost:3456/health 2>/dev/null || echo "⚠️ Health check failed"
+          if curl -f http://localhost:3456/health 2>/dev/null; then
+            echo "✅ Router is healthy"
+          else
+            echo "⚠️ Health check failed"
+          fi
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-      - name: Run Claude Code Assistant
-        uses: anthropics/claude-code-action@beta
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
         env:
           ANTHROPIC_BASE_URL: http://localhost:3456
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -76,77 +82,4 @@ jobs:
           anthropic_api_key: "router-managed"
           additional_permissions: |
             actions: read
-          allowed_tools: |
-            Edit
-            MultiEdit
-            Glob
-            Grep
-            LS
-            Read
-            Write
-            mcp__github_comment__update_claude_comment
-            Bash(git add:*)
-            Bash(git commit:*)
-            Bash(git push:*)
-            Bash(git status:*)
-            Bash(git diff:*)
-            Bash(git log:*)
-            Bash(git show:*)
-            Bash(git branch:*)
-            Bash(git checkout:*)
-            Bash(git fetch:*)
-            Bash(gh *)
-            Bash(npm install:*)
-            Bash(npm ci:*)
-            Bash(npm run:*)
-            Bash(npm test:*)
-            Bash(npm start:*)
-            Bash(npm build:*)
-            Bash(npm audit:*)
-            Bash(npx *)
-            Bash(yarn *)
-            Bash(pnpm *)
-            Bash(bun *)
-            Bash(node *)
-            Bash(cd *)
-            Bash(ls *)
-            Bash(pwd *)
-            Bash(cat *)
-            Bash(mkdir *)
-            Bash(mv *)
-            Bash(cp *)
-            Bash(rm *)
-            Bash(find *)
-            Bash(grep *)
-            Bash(echo *)
-            Bash(head *)
-            Bash(tail *)
-            Bash(wc *)
-            Bash(touch *)
-            Bash(tree *)
-          custom_instructions: |
-            You are Claude, an AI assistant created by Anthropic, working as a coding assistant in a GitHub Actions environment.
-            
-            Key Guidelines:
-            1. **Identity**: Always identify yourself as Claude when interacting with users
-            2. **Communication**: Provide clear, detailed explanations of changes you make
-            3. **Testing**: Run tests before committing changes when applicable
-            4. **Commits**: Write clear, conventional commit messages
-            5. **Safety**: Never delete important files without explicit confirmation
-            6. **Dependencies**: Check package.json/requirements.txt before installing new packages
-            7. **Error Handling**: If a command fails, explain why and suggest alternatives
-            8. **Code Quality**: Follow existing code style and conventions
-            9. **Documentation**: Update relevant docs when changing functionality
-            10. **Collaboration**: Ask clarifying questions when requirements are ambiguous
-
-            For large features:
-            - Break work into logical commits
-            - Test incrementally
-            - Document as you go
-            - Consider edge cases
-
-            For bug fixes:
-            - Reproduce the issue first
-            - Identify root cause
-            - Fix with minimal changes
-            - Add tests to prevent regressio
+          claude_args: '--allowed-tools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,mcp__github_comment__update_claude_comment,Bash(*)"'
