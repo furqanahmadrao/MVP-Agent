@@ -98,51 +98,66 @@ MVP Agent runs **3 internal MCP servers** (auto-started, no manual setup needed)
    - Performs Google Custom Search queries
    - Returns structured competitor and market data
 
-```bash
-# Create virtual environment
-python -m venv venv
+3. **markdownify-mcp** (Port 8083)
+   - Handles markdown formatting and rendering
+   - Endpoints: `/format_markdown`, `/render_mermaid`
 
-# Activate (Windows)
-venv\Scripts\activate
-# Activate (macOS/Linux)
-source venv/bin/activate
+### Local Development
 
-# Install dependencies
-pip install -r requirements.txt
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/furqanahmadrao/MVP-Agent.git
+    cd MVP-Agent
+    ```
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv venv
+    # On Windows:
+    venv\Scripts\activate
+    # On macOS/Linux:
+    source venv/bin/activate
+    ```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  **Set up environment variables:**
+    Create a `.env` file in the root directory or set them directly in your shell:
+    ```
+    GEMINI_API_KEY=your_gemini_api_key
+    GOOGLE_API_KEY=your_google_cloud_api_key  # Optional, for enhanced search
+    GOOGLE_SEARCH_ENGINE_ID=your_custom_search_engine_id # Optional, for enhanced search
+    ```
+    -   **GEMINI_API_KEY**: Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
+    -   **GOOGLE_API_KEY** (Optional): Get from [Google Cloud Console](https://console.cloud.google.com/).
+    -   **GOOGLE_SEARCH_ENGINE_ID** (Optional): Create at [Google Programmable Search](https://programmablesearchengine.google.com/).
+        *Note: Without Google Search API, the agent uses placeholder data but still generates valid blueprints.*
 
-# GOOGLE_SEARCH_ENGINE_ID=your_cse_id (optional)
-
-# Run the app
-```
-
-The app will:
-1. ✅ Start all 3 MCP servers
+5.  **Run the application:**
+    ```bash
+    python app.py
+    ```
+    The app will:
+    1.  ✅ Start all 3 MCP servers (file-manager-mcp, google-search-mcp, markdownify-mcp)
+    2.  ✅ Launch the Gradio UI in your browser (usually at `http://127.0.0.1:7860`)
 ---
 ## 🌐 Deploy on Hugging Face Spaces
 
 This repository is **ready for one-click deployment** to HF Spaces:
 
 ### Steps:
-1. **Fork/Clone** this Space or create a new Space from this repository
-   ```
-   GEMINI_API_KEY=your_gemini_api_key
-   GOOGLE_API_KEY=your_google_api_key (optional)
-   GOOGLE_SEARCH_ENGINE_ID=your_cse_id (optional)
-   ```
+1. **Fork/Clone** this Space or create a new Space from this repository.
+2. **Set up Secrets:** In your Hugging Face Space settings, add the following as secrets:
+    - `GEMINI_API_KEY` (Required): Get from [Google AI Studio](https://makersuite.google.com/app/apikey)
+    - `GOOGLE_API_KEY` (Optional, for enhanced search): Get from [Google Cloud Console](https://console.cloud.google.com/)
+    - `GOOGLE_SEARCH_ENGINE_ID` (Optional, for enhanced search): Create at [Google Programmable Search](https://programmablesearchengine.google.com/)
+        *Note: Without Google Search API, the agent uses placeholder data but still generates valid blueprints.*
 3. **Deploy** - HF will automatically:
    - Install dependencies from `requirements.txt`
    - Run `app.py`
    - Start all MCP servers
    - Expose the Gradio UI
 
-### Required Secrets:
-- `GEMINI_API_KEY` - Get from [Google AI Studio](https://makersuite.google.com/app/apikey)
-
-### Optional Secrets (for full search capabilities):
-- `GOOGLE_API_KEY` - Get from [Google Cloud Console](https://console.cloud.google.com/)
-- `GOOGLE_SEARCH_ENGINE_ID` - Create at [Google Programmable Search](https://programmablesearchengine.google.com/)
-
-**Note:** Without Google Search API, the agent uses placeholder data but still generates valid blueprints.
 
 ---
 
