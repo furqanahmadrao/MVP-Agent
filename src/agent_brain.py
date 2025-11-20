@@ -12,13 +12,6 @@ from .mcp_clients import get_research_orchestrator
 from .prompts import PromptTemplates, get_system_prompt
 from .mcp_http_clients import GoogleSearchMCPClient, MarkdownifyMCPClient
 from .file_manager import sanitize_markdown
-from .mermaid_utils import (
-    extract_mermaid_blocks,
-    validate_mermaid_block,
-    validate_markdown_mermaid,
-    log_mermaid_attempt,
-    fix_common_mermaid_errors
-)
 
 @dataclass
 class AgentState:
@@ -69,111 +62,7 @@ class MVPAgent:
         if self.status_callback:
             self.status_callback(message)
     
-    def _fix_mermaid_diagram(self, mermaid_code: str, error_reason: str, max_attempts: int = 3) -> tuple[str, bool]:
-        """
-        Attempt to fix a broken Mermaid diagram using AI
-        
-        Args:
-            mermaid_code: The invalid Mermaid code
-            error_reason: Description of the error
-            max_attempts: Maximum fix attempts
-            
-        Returns:
-            Tuple of (fixed_code, is_valid)
-        """
-        current_code = mermaid_code
-        
-        for attempt in range(max_attempts):
-            try:
-                # Create fix prompt
-                fix_prompt = self.prompts.format_fix_mermaid(current_code, error_reason)
-                
-                # Call AI to fix (use Flash-Lite for speed)
-                time.sleep(2)  # Rate limit protection
-                response = self.gemini_client.generate(
-                    prompt=fix_prompt,
-                    model_type=ModelType.FLASH_LITE,
-                    temperature=0.3  # Low temperature for precise fixes
-                )
-                
-                # Extract the mermaid block from response
-                blocks = extract_mermaid_blocks(response)
-                if not blocks:
-                    # Try to extract without fences
-                    current_code = response.strip()
-                else:
-                    current_code = blocks[0]
-                
-                # Validate the fix
-                is_valid, new_error = validate_mermaid_block(current_code)
-                
-                if is_valid:
-                    return current_code, True
-                else:
-                    # Update error reason for next attempt
-                    error_reason = new_error
-                    
-            except Exception as e:
-                # Log error and continue to next attempt
-                print(f"Mermaid fix attempt {attempt+1} failed: {e}")
-                continue
-        
-        # If all attempts failed, try automatic fixes
-        try:
-            auto_fixed = fix_common_mermaid_errors(current_code)
-            is_valid, _ = validate_mermaid_block(auto_fixed)
-            if is_valid:
-                return auto_fixed, True
-        except Exception:
-            pass
-        
-        return current_code, False
-    
-    def _validate_and_fix_mermaid_in_markdown(self, markdown: str, file_type: str) -> str:
-        """
-        Validate and fix all Mermaid diagrams in a markdown file
-        
-        Args:
-            markdown: Full markdown content
-            file_type: Type of file (for logging)
-            
-        Returns:
-            Markdown with fixed Mermaid diagrams
-        """
-        # Extract all Mermaid blocks
-        blocks = extract_mermaid_blocks(markdown)
-        
-        if not blocks:
-            # No Mermaid blocks found - nothing to fix
-            return markdown
-        
-        # Log original attempt
-        for i, block in enumerate(blocks):
-            is_valid, error = validate_mermaid_block(block)
-            log_mermaid_attempt(file_type, 0, block, is_valid, error)
-            
-            if not is_valid:
-                self._update_status(f"🔧 Fixing Mermaid diagram {i+1} in {file_type}...")
-                
-                # Try to fix
-                fixed_block, success = self._fix_mermaid_diagram(block, error)
-                
-                if success:
-                    self._update_status(f"✅ Fixed Mermaid diagram {i+1} in {file_type}")
-                    # Replace the broken block with fixed one
-                    markdown = markdown.replace(
-                        f"```mermaid\n{block}\n```",
-                        f"```mermaid\n{fixed_block}\n```"
-                    )
-                    # Log successful fix
-                    log_mermaid_attempt(file_type, 1, fixed_block, True, "")
-                else:
-                    self._update_status(f"⚠️  Could not auto-fix Mermaid diagram {i+1} in {file_type}")
-                    # Log failed fix attempt
-                    log_mermaid_attempt(file_type, 1, fixed_block, False, "max attempts reached")
-        
-        return markdown
-    
+
     def generate_mvp(self, idea: str) -> Dict[str, str]:
         """
         Main entry point: Generate complete MVP specification
@@ -434,18 +323,6 @@ class MVPAgent:
                 
                 # Then sanitize to remove invisible characters
                 sanitized = sanitize_markdown(normalized)
-                
-                # Validate and fix Mermaid blocks if this file should contain them
-                if key in ["architecture_md", "user_flow_md"]:
-                    # These files SHOULD have Mermaid diagrams
-                    file_type = key.replace("_md", "")
-                    sanitized = self._validate_and_fix_mermaid_in_markdown(sanitized, file_type)
-                    
-                    # Final validation check
-                    is_valid, error_msg = validate_markdown_mermaid(sanitized)
-                    if not is_valid:
-                        self._update_status(f"⚠️  Warning: {key} still has Mermaid issues: {error_msg}")
-                        print(f"Mermaid validation warning for {key}: {error_msg}")
                 
                 normalized_files[key] = sanitized
 

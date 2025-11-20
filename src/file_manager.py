@@ -16,8 +16,7 @@ from .mcp_http_clients import FileManagerMCPClient
 
 def sanitize_markdown(content: str) -> str:
     """
-    Sanitize markdown content by removing invisible/control characters
-    that can break Mermaid diagram rendering.
+    Sanitize markdown content by removing invisible/control characters.
     
     Args:
         content: Raw markdown content
@@ -43,59 +42,6 @@ def sanitize_markdown(content: str) -> str:
     sanitized = sanitized.replace('\r\n', '\n').replace('\r', '\n')
     
     return sanitized
-
-
-def validate_mermaid_blocks(content: str) -> Tuple[bool, str]:
-    """
-    Validate Mermaid code blocks in markdown content.
-    
-    Args:
-        content: Markdown content with potential Mermaid blocks
-        
-    Returns:
-        Tuple of (is_valid, error_message)
-    """
-    if not content:
-        return True, ""
-    
-    # Find all Mermaid code blocks
-    mermaid_pattern = r'```mermaid\s*\n(.*?)\n```'
-    blocks = re.findall(mermaid_pattern, content, re.DOTALL)
-    
-    if not blocks:
-        return True, ""  # No Mermaid blocks found
-    
-    for i, block in enumerate(blocks):
-        block = block.strip()
-        
-        # Check if block is empty
-        if not block:
-            return False, f"Mermaid block {i+1} is empty"
-        
-        # Check if block has at least a diagram type declaration
-        # Common types: flowchart, graph, sequenceDiagram, classDiagram, etc.
-        diagram_types = ['flowchart', 'graph', 'sequenceDiagram', 'classDiagram', 
-                         'stateDiagram', 'erDiagram', 'journey', 'gantt', 'pie']
-        
-        has_type = any(dtype in block for dtype in diagram_types)
-        if not has_type:
-            return False, f"Mermaid block {i+1} missing diagram type declaration"
-        
-        # Check for common syntax issues
-        lines = block.split('\n')
-        for line_num, line in enumerate(lines, 1):
-            # Check for unclosed brackets/parentheses in node definitions
-            if '[' in line and ']' not in line:
-                # May be multiline, but check if it looks incomplete
-                pass  # Too complex for simple validation
-            
-            # Check for missing arrows in flowcharts
-            if 'flowchart' in block and '--' in line:
-                if not ('-->' in line or '---' in line):
-                    # Might be incomplete
-                    pass
-    
-    return True, ""
 
 
 class FileManager:

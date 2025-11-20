@@ -3,9 +3,9 @@
 .env.*
 
 # Development/planning docs (not needed in production)
+AGENTS.md
 docs/
 .kiro/
-.docs/
 
 # Python cache and compiled files
 __pycache__/
@@ -14,6 +14,7 @@ __pycache__/
 
 # Logs and outputs (generated at runtime)
 logs/
+logs/mermaid/
 *.log
 outputs/
 

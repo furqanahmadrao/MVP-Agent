@@ -239,70 +239,144 @@ Create FIVE comprehensive, production-ready markdown files that form a complete 
 2. **Be Quantified**: Include metrics, timelines, costs, user counts, percentages
 3. **Be Actionable**: Every statement should inform a concrete implementation decision
 4. **Cite Research**: Reference the market research insights provided in context
-5. **Be Comprehensive**: Meet minimum word counts and section requirements
+5. **Be Comprehensive**: Meet ALL minimum word counts and section requirements
+6. **Use Structured Markdown**: MANDATORY use of tables and numbered lists (see below)
 
-### Mermaid Diagram Requirements:
-You MUST include Mermaid diagrams in `architecture.md` and `user_flow.md`. Follow these rules:
+### Structured Markdown Requirements (MANDATORY):
+You MUST use clear, hierarchical structured markdown in `architecture.md` and `user_flow.md`. These are NOT optional - they are required formatting standards.
 
-**Diagram Best Practices:**
-- Use proper node shapes: `{{}}` for decisions, `()` for processes, `[]` for screens/states, `[()]` for start/end
-- Add descriptive labels on ALL edges (arrows)
-- Use `TD` (top-down) direction for user flows, `LR` (left-right) for architecture
-- Include subgraphs to group related components
-- Keep diagrams readable: 15-25 nodes maximum, use meaningful IDs
-- Add comments with `%%` for clarification
+**Architecture Formatting Requirements (MANDATORY):**
+- MUST use markdown tables for ALL component listings
+- MUST use nested lists for hierarchical structures
+- MUST use text arrows (→) for data flow descriptions
+- MUST use clear section headers (###, ####) for organization
+- MUST include specific technology versions and justifications
+- NO code blocks for architecture visualization
+- NO diagram syntax of any kind
 
-**Architecture Diagram Template:**
-```mermaid
-flowchart LR
-    subgraph Client["Client Layer"]
-        Web[Web App<br/>React]
-        Mobile[Mobile App<br/>React Native]
-    end
-    
-    subgraph API["API Layer"]
-        Gateway[API Gateway<br/>nginx]
-        Auth[Auth Service<br/>JWT]
-        Core[Core API<br/>Node.js]
-    end
-    
-    subgraph Data["Data Layer"]
-        PG[(PostgreSQL<br/>Primary DB)]
-        Redis[(Redis<br/>Cache)]
-        S3[("S3<br/>File Storage")]
-    end
-    
-    Web & Mobile -->|HTTPS| Gateway
-    Gateway -->|Authenticate| Auth
-    Gateway -->|API Requests| Core
-    Core -->|Read/Write| PG
-    Core -->|Cache| Redis
-    Core -->|Store Files| S3
+**Architecture Structure Template:**
+```markdown
+## System Architecture
+
+### Overview
+[2-3 paragraph description of the overall system design and approach]
+
+### Component Layers
+
+#### Client Layer
+| Component | Technology | Purpose | Key Features |
+|-----------|-----------|---------|--------------|
+| Web App | React 18.2 + TypeScript | Browser interface | Responsive design, PWA-ready, offline support |
+| Mobile App | React Native 0.72 | iOS/Android native | Push notifications, biometric auth, offline-first |
+
+#### API Layer
+| Component | Technology | Purpose | Key Features |
+|-----------|-----------|---------|--------------|
+| API Gateway | nginx 1.24 | Load balancing & routing | Rate limiting, SSL termination, request logging |
+| Auth Service | Node.js + JWT | Authentication | OAuth2, refresh tokens, MFA support |
+| Core API | Express 4.18 | Business logic | RESTful endpoints, versioned API, input validation |
+
+#### Data Layer
+| Component | Technology | Purpose | Key Features |
+|-----------|-----------|---------|--------------|
+| PostgreSQL | v15 | Primary database | ACID compliance, relational data, full-text search |
+| Redis | v7 | Cache & sessions | Sub-ms latency, pub/sub messaging, session storage |
+| S3 | AWS | File storage | CDN integration, versioning, lifecycle policies |
+
+### Data Flow
+
+**Primary Request Flow:**
+1. Client sends HTTPS request → API Gateway (nginx)
+2. Gateway validates SSL/TLS → Routes to Auth Service
+3. Auth Service verifies JWT token → Returns user context
+4. Gateway forwards authenticated request → Core API
+5. Core API processes business logic → Queries PostgreSQL
+6. Database returns data → Core API transforms response
+7. Core API checks Redis cache → Updates if needed
+8. Response sent back through Gateway → Client receives JSON
+
+**File Upload Flow:**
+1. Client initiates upload → Core API generates presigned S3 URL
+2. Client uploads directly to S3 → Bypasses API for large files
+3. S3 triggers webhook → Core API updates database record
+4. Database stores file metadata → Links to user account
 ```
 
-**User Flow Diagram Template:**
-```mermaid
-flowchart TD
-    Start([User Opens App]) --> Check{{First Time?}}
-    Check -->|Yes| Onboard[Onboarding Flow]
-    Check -->|No| Dashboard[Dashboard Screen]
-    
-    Onboard --> SetGoals[Set Goals Screen]
-    SetGoals --> Personalize[Personalization Quiz]
-    Personalize --> Dashboard
-    
-    Dashboard --> Action{{User Action?}}
-    Action -->|Create| Create[Create New Item]
-    Action -->|View| View[View Details]
-    Action -->|Settings| Settings[Settings Screen]
-    
-    Create --> Validate{{Valid Input?}}
-    Validate -->|No| Error[Show Error Message]
-    Validate -->|Yes| Save[Save to Database]
-    
-    Error --> Create
-    Save --> Success[Success Message]
-    Success --> Dashboard
+**User Flow Formatting Requirements (MANDATORY):**
+- MUST use numbered lists for ALL sequential steps
+- MUST use indentation for sub-steps and decision branches
+- MUST clearly mark decision points with "Decision:" prefix
+- MUST include alternative paths and error handling
+- MUST specify screen names and user actions explicitly
+- NO flowchart syntax or code blocks
+- NO diagram syntax of any kind
+
+**User Flow Structure Template:**
+```markdown
+## Primary User Journey
+
+### Journey: New User Onboarding
+
+**Goal:** User creates account and completes first core action
+
+**Steps:**
+
+1. **Landing Page**
+   - User arrives at homepage
+   - Sees value proposition and CTA button
+   - Decision: Sign up or Learn more?
+   
+2. **Sign Up Flow** (if user chooses Sign up)
+   - User clicks "Get Started" button
+   - Redirected to registration form
+   - Enters: email, password, name
+   - Submits form
+   
+3. **Email Verification**
+   - System sends verification email
+   - User checks inbox
+   - Clicks verification link
+   - Account activated
+   
+4. **Welcome Screen**
+   - User sees personalized welcome message
+   - Presented with quick tutorial (optional)
+   - Decision: Take tutorial or Skip?
+   
+5. **Tutorial** (if user chooses Take tutorial)
+   - Step 1: Overview of main features (30 seconds)
+   - Step 2: Interactive demo of core action (60 seconds)
+   - Step 3: Tips for getting started (30 seconds)
+   - User completes tutorial
+   
+6. **Dashboard**
+   - User lands on main dashboard
+   - Sees empty state with helpful prompts
+   - CTA: "Create Your First [Item]"
+   
+7. **First Core Action**
+   - User clicks CTA button
+   - Modal/form appears
+   - User fills required fields
+   - Submits creation
+   
+8. **Success State**
+   - System processes creation
+   - Success message displayed
+   - User sees their first item in dashboard
+   - Onboarding complete ✓
+
+**Alternative Paths:**
+
+- **If email verification fails:** User can request new verification email
+- **If user skips tutorial:** Can access it later from Help menu
+- **If creation fails:** Error message with specific fix instructions
+- **If user exits mid-flow:** Progress saved, can resume later
+
+**Success Metrics:**
+- 70%+ users complete email verification within 24 hours
+- 50%+ users complete first core action within first session
+- 80%+ users who complete tutorial return within 7 days
 ```
 
 ## Output Format:
@@ -311,9 +385,9 @@ Return ONLY valid JSON with NO preamble or explanation:
 ```json
 {{
     "features_md": "complete markdown content...",
-    "architecture_md": "complete markdown content with Mermaid diagram...",
+    "architecture_md": "complete markdown content with structured component tables and data flow...",
     "design_md": "complete markdown content...",
-    "user_flow_md": "complete markdown content with Mermaid diagram...",
+    "user_flow_md": "complete markdown content with numbered step-by-step journeys...",
     "roadmap_md": "complete markdown content..."
 }}
 ```
@@ -330,7 +404,7 @@ Return ONLY valid JSON with NO preamble or explanation:
 
 # File Specifications
 
-## 1. features.md (Minimum 800 words)
+## 1. features.md (Minimum 900 words)
 
 **Required Structure:**
 ```markdown
@@ -357,7 +431,7 @@ Return ONLY valid JSON with NO preamble or explanation:
 [Same table format, 3-5 P2 features]
 
 ## Feature Dependencies
-[Diagram or list showing which features depend on others]
+[Structured list or table showing which features depend on others, with clear dependency relationships]
 
 ## Competitive Differentiation
 [How our feature set beats competitors, citing research insights]
@@ -366,17 +440,23 @@ Return ONLY valid JSON with NO preamble or explanation:
 *Generated by MVP Agent | Powered by AI*
 ```
 
-## 2. architecture.md (Minimum 1000 words)
+## 2. architecture.md (Minimum 1200 words)
 
 **Required Sections:**
 - Architecture Overview (2-3 paragraphs)
+- System Architecture (MUST use component tables organized by layer - see template above)
+- Data Flow (MUST use numbered steps with text arrows showing request/response flow)
 - Tech Stack Justification (specific versions and WHY for each choice)
-- System Components (detailed descriptions)
-- Database Schema (tables, fields, relationships, indexes)
-- API Structure (10-15 endpoints with method, path, request/response)
+- Database Schema (MUST use tables with fields, relationships, indexes)
+- API Structure (10-15 endpoints with method, path, request/response in table format)
 - Security Architecture
 - Scalability Strategy
-- **MUST include comprehensive Mermaid architecture diagram**
+
+**Mandatory Formatting:**
+- Component layers MUST be presented in markdown tables
+- Data flow MUST be numbered sequential steps with text arrows (→)
+- NO code blocks for architecture visualization
+- Use clear hierarchical headers (###, ####) for organization
 
 **Example Tech Stack Section:**
 ```markdown
@@ -392,7 +472,7 @@ Return ONLY valid JSON with NO preamble or explanation:
 - **Why**: JavaScript full-stack (shared types), async I/O for real-time features
 ```
 
-## 3. design.md (Minimum 600 words)
+## 3. design.md (Minimum 700 words)
 
 **Required Sections:**
 - Design Philosophy
@@ -417,15 +497,21 @@ Return ONLY valid JSON with NO preamble or explanation:
 - **Error**: #EF4444 (errors, destructive actions)
 ```
 
-## 4. user_flow.md (Minimum 700 words)
+## 4. user_flow.md (Minimum 900 words)
 
 **Required Sections:**
 - User Personas (2-3 detailed personas from research)
-- Primary User Journey (15-25 steps with Action, Screen, Result, Edge Cases)
-- Secondary Flows (onboarding, core feature, settings)
-- Error Handling Flows
-- Success Metrics
-- **MUST include detailed Mermaid flowchart with decision points**
+- Primary User Journey (MUST use numbered steps with clear decision points and alternative paths)
+- Secondary Flows (onboarding, core feature, settings - MUST use numbered lists)
+- Alternative Paths (error handling, edge cases, conditional branches)
+- Success Metrics (measurable outcomes for each journey)
+
+**Mandatory Formatting:**
+- All user journeys MUST be numbered sequential steps
+- Use indentation for sub-steps and decision branches
+- Clearly mark decision points with "Decision:" prefix
+- NO flowchart syntax or code blocks for user flows
+- Use plain text descriptions with clear step numbers
 
 **Persona Template:**
 ```markdown
@@ -437,7 +523,7 @@ Return ONLY valid JSON with NO preamble or explanation:
 - **Quote**: "[Real user quote from research if available]"
 ```
 
-## 5. roadmap.md (Minimum 800 words)
+## 5. roadmap.md (Minimum 900 words)
 
 **Required Structure:**
 - Project Overview
@@ -475,50 +561,49 @@ Return ONLY valid JSON with NO preamble or explanation:
   <idea>AI-powered meal planning app for busy professionals</idea>
   <research>{{...comprehensive research data...}}</research>
 </input>
-<output_sample type="architecture_md_mermaid">
-```mermaid
-flowchart LR
-    subgraph Frontend["Frontend - React Native"]
-        App[Mobile App]
-        Web[Web Dashboard]
-    end
-    
-    subgraph API["API Gateway - AWS ALB"]
-        Auth[Authentication<br/>JWT + OAuth]
-        Core[Core API<br/>Node.js + Express]
-        ML[ML Service<br/>Python + FastAPI]
-    end
-    
-    subgraph Data["Data Layer"]
-        PG[(PostgreSQL<br/>User/Meal Data)]
-        Mongo[(MongoDB<br/>Recipe Library)]
-        Redis[(Redis<br/>Session Cache)]
-        S3[("S3<br/>Food Photos")]
-    end
-    
-    subgraph External["External APIs"]
-        Nutrition[Nutritionix API<br/>Food Database]
-        Vision[Google Vision<br/>Photo Recognition]
-        Payment[Stripe<br/>Subscriptions]
-    end
-    
-    App & Web -->|HTTPS| Auth
-    Auth -->|Validate| Core
-    Core -->|Store Users| PG
-    Core -->|Query Recipes| Mongo
-    Core -->|Cache Sessions| Redis
-    Core -->|Photo Analysis| ML
-    ML -->|Store Images| S3
-    Core -->|Get Nutrition| Nutrition
-    ML -->|Analyze Photos| Vision
-    Core -->|Process Payments| Payment
-```
+<output_sample type="architecture_md_structured">
+## System Architecture
+
+### Component Layers
+
+#### Frontend Layer
+| Component | Technology | Purpose | Key Features |
+|-----------|-----------|---------|--------------|
+| Mobile App | React Native 0.72 | iOS/Android native | Offline meal plans, barcode scanning, push notifications |
+| Web Dashboard | React 18.2 + TypeScript | Browser interface | Recipe management, analytics, meal history |
+
+#### API Layer
+| Component | Technology | Purpose | Key Features |
+|-----------|-----------|---------|--------------|
+| API Gateway | AWS ALB | Load balancing | SSL termination, rate limiting, request routing |
+| Auth Service | Node.js + JWT + OAuth | Authentication | Social login, MFA, refresh tokens |
+| Core API | Express 4.18 | Business logic | Meal generation, nutrition tracking, user preferences |
+| ML Service | Python + FastAPI | AI features | Food photo recognition, personalized recommendations |
+
+#### Data Layer
+| Component | Technology | Purpose | Key Features |
+|-----------|-----------|---------|--------------|
+| PostgreSQL | v15 | User & meal data | ACID compliance, full-text search for recipes |
+| MongoDB | v6 | Recipe library | Flexible schema, fast queries, 100K+ recipes |
+| Redis | v7 | Session cache | Sub-ms latency, pub/sub for real-time updates |
+| S3 | AWS | Food photos | CDN integration, image optimization |
+
+### Data Flow
+
+**Meal Generation Flow:**
+1. User requests meal plan → Core API receives request
+2. Core API fetches user preferences → Queries PostgreSQL
+3. Core API searches recipes → Queries MongoDB with filters
+4. ML Service personalizes selection → Applies user taste model
+5. Core API generates 7-day plan → Optimizes for nutrition goals
+6. Response cached in Redis → Improves subsequent loads
+7. Client receives meal plan → Displays with photos from S3
 </output_sample>
 </example>
 
 # Task
 
-Generate all 5 markdown files following the specifications above. Use ALL research insights, include Mermaid diagrams in architecture.md and user_flow.md, and ensure every file meets minimum word count and quality standards."""
+Generate all 5 markdown files following the specifications above. Use ALL research insights, include structured component tables and data flows in architecture.md, include numbered step-by-step journeys in user_flow.md, and ensure every file meets minimum word count and quality standards."""
 
     # Fallback prompt (when research fails)
     GENERATE_MVP_FALLBACK = """# Identity
@@ -531,7 +616,7 @@ Generate a comprehensive MVP specification using your expertise about this produ
 
 ## Requirements:
 1. Generate all 5 files (features.md, architecture.md, design.md, user_flow.md, roadmap.md)
-2. Include Mermaid diagrams in architecture.md and user_flow.md
+2. Use structured markdown with component tables in architecture.md and numbered journeys in user_flow.md
 3. Use realistic, modern tech stack appropriate for this product type
 4. Follow the same structure as the full research version
 5. Base decisions on industry standards and common patterns
@@ -541,9 +626,9 @@ Return ONLY valid JSON:
 ```json
 {{
     "features_md": "complete markdown...",
-    "architecture_md": "complete markdown with Mermaid diagram...",
+    "architecture_md": "complete markdown with structured component tables and data flow...",
     "design_md": "complete markdown...",
-    "user_flow_md": "complete markdown with Mermaid diagram...",
+    "user_flow_md": "complete markdown with numbered step-by-step journeys...",
     "roadmap_md": "complete markdown..."
 }}
 ```
@@ -560,39 +645,9 @@ Return ONLY valid JSON:
 
 # Task
 
-Generate all 5 files using industry expertise. Include comprehensive Mermaid diagrams showing system architecture and user flows. Make it agent-ready and professional."""
+Generate all 5 files using industry expertise. Use structured markdown with clear component tables for architecture and numbered step sequences for user flows. Make it agent-ready and professional."""
 
-    # Mermaid Diagram Fix Prompt
-    FIX_MERMAID = """# Task: Fix Mermaid Diagram Syntax Error
 
-You are a Mermaid diagram syntax expert. Fix ONLY the syntax error in the diagram below. Output EXACTLY one valid Mermaid code block and nothing else.
-
-## Error Found:
-{error_reason}
-
-## Invalid Diagram:
-```mermaid
-{original_block}
-```
-
-## Requirements:
-1. Output ONLY a fenced code block starting with ```mermaid and ending with ```
-2. Fix the specific error mentioned above
-3. Preserve the diagram's structure and meaning
-4. Use only valid Mermaid syntax:
-   - Diagram types: graph TD/LR, flowchart TD/LR, sequenceDiagram, etc.
-   - Node shapes: [] for boxes, () for rounded, {{}} for decisions, [()] for circles
-   - Arrows: -->, ---, .-.>, ==>, -->|label|
-   - No spaces in node IDs (use underscores or camelCase)
-5. Ensure all brackets and parentheses are balanced
-6. No incomplete arrows (every arrow must have a target)
-
-## Output Format (EXACT):
-```mermaid
-[corrected diagram here]
-```
-
-Do NOT add explanations, comments, or text outside the code block."""
 
     @staticmethod
     def format_search_queries(idea: str) -> str:
@@ -629,45 +684,9 @@ Do NOT add explanations, comments, or text outside the code block."""
             idea=idea,
             context=context or "Limited research data available"
         )
-    
-    FIX_MERMAID = """# Task: Fix Mermaid Diagram Syntax Error
 
-You are a Mermaid diagram syntax expert. Fix ONLY the syntax error in the diagram below. Output EXACTLY one valid Mermaid code block and nothing else.
 
-## Error Found:
-{error_reason}
 
-## Invalid Diagram:
-```mermaid
-{original_block}
-```
-
-## Requirements:
-1. Output ONLY a fenced code block starting with ```mermaid and ending with ```
-2. Fix the specific error mentioned above
-3. Preserve the diagram's structure and meaning
-4. Use only valid Mermaid syntax:
-   - Diagram types: graph TD/LR, flowchart TD/LR, sequenceDiagram, etc.
-   - Node shapes: [] for boxes, () for rounded, {{}} for decisions, [()] for circles
-   - Arrows: -->, ---, .-.>, ==>, -->|label|
-   - No spaces in node IDs (use underscores or camelCase)
-5. Ensure all brackets and parentheses are balanced
-6. No incomplete arrows (every arrow must have a target)
-
-## Output Format (EXACT):
-```mermaid
-[corrected diagram here]
-```
-
-Do NOT add explanations, comments, or text outside the code block."""
-
-    @staticmethod
-    def format_fix_mermaid(original_block: str, error_reason: str) -> str:
-        """Format the Mermaid diagram fix prompt"""
-        return PromptTemplates.FIX_MERMAID.format(
-            original_block=original_block,
-            error_reason=error_reason
-        )
 
 # System prompts for different agent roles
 SYSTEM_PROMPTS = {
@@ -675,11 +694,9 @@ SYSTEM_PROMPTS = {
     
     "research_analyst": """You are Dr. Sarah Chen, a senior market intelligence analyst with 20+ years of experience in competitive analysis and product research. You synthesize disparate data sources into actionable product insights with specific metrics and evidence.""",
     
-    "mvp_architect": """You are Alex Rivera, a principal product architect with 15+ years building successful SaaS products. You create comprehensive, implementation-ready specifications that development teams or AI coding agents can execute immediately. You always include detailed Mermaid diagrams and specific technical decisions.""",
+    "mvp_architect": """You are Alex Rivera, a principal product architect with 15+ years building successful SaaS products. You create comprehensive, implementation-ready specifications that development teams or AI coding agents can execute immediately. You use structured markdown with clear component tables and numbered user journeys.""",
     
-    "fallback_architect": """You are Alex Rivera, a principal product architect who can create solid MVP specifications using industry expertise and proven patterns, even with limited research data. You apply best practices and modern technical standards.""",
-    
-    "mermaid_fixer": """You are a Mermaid diagram syntax expert. You fix diagram errors with surgical precision while preserving meaning. You output ONLY valid Mermaid code blocks."""
+    "fallback_architect": """You are Alex Rivera, a principal product architect who can create solid MVP specifications using industry expertise and proven patterns, even with limited research data. You apply best practices and modern technical standards."""
 }
 
 def get_system_prompt(role: str) -> str:

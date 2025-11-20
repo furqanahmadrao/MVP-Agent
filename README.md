@@ -32,13 +32,13 @@ Transform any startup idea into a complete, production-ready MVP specification i
 Input a single paragraph describing your startup idea. Get back:
 
 - **📋 Features.md** - Prioritized feature requirements (P0, P1, P2)
-- **🏗️ Architecture.md** - Technical stack, database schema, API design (with Mermaid diagrams)
+- **🏗️ Architecture.md** - Technical stack, database schema, API design (with structured component tables)
 - **🎨 Design.md** - UI/UX guidelines, design system, accessibility standards
-- **🗺️ User Flow.md** - Complete user journeys (with Mermaid flowcharts)
+- **🗺️ User Flow.md** - Complete user journeys (with step-by-step journeys)
 - **📅 Roadmap.md** - 6-week launch plan with milestones
 - **📦 ZIP Download** - All files packaged for your team
 
-All outputs are **opinionated**, **implementation-ready**, and include **rendered Mermaid diagrams**.
+All outputs are **opinionated**, **implementation-ready**, and use **structured markdown** for clarity.
 
 ---
 
@@ -79,7 +79,7 @@ MVP Agent is a **multi-phase autonomous agent** powered by Google Gemini and cus
 
 ### Phase 4: Blueprint Generation ✨
 - Creates 5 detailed markdown documents
-- Generates Mermaid diagrams for architecture and user flows
+- Generates structured tables and step-by-step flows
 - Packages everything into a downloadable ZIP
 
 **Total time:** ~60-90 seconds per blueprint
@@ -164,7 +164,7 @@ This repository is **ready for one-click deployment** to HF Spaces:
 - **Orange/Black Theme** - High contrast, modern design
 - **Real-time Status Updates** - See the agent's reasoning process
 - **Tabbed Output** - Easy navigation between documents
-- **Mermaid Diagram Rendering** - Architecture and user flows visualized
+- **Structured Markdown** - Clear tables and step-by-step flows
 - **One-Click Download** - Get all files as ZIP
 
 ### Mobile Responsive
@@ -192,14 +192,6 @@ GOOGLE_SEARCH_ENGINE_ID=your_custom_search_engine_id
 - Gemini API: Check your Google Cloud quota
 - Configurable via `src/google_quota.py`
 
-### Troubleshooting Mermaid Diagrams
-- If you see "Syntax error in text" in the Architecture/User Flow tab, open `logs/mermaid/` to see the original diagram plus AI fix attempts.
-- You can run the validator locally to test a Mermaid block:
-```bash
-python -c "from src.mermaid_utils import validate_mermaid_block; print(validate_mermaid_block('graph TD\nA --> B'))"
-```
-- If you want to reproduce the original issue without auto-fixes, run the agent locally and inspect `logs/mermaid/` (AI fix attempts are logged). There isn't currently an env var to disable fixes; the logs let you compare original vs fixed output.
-
 ---
 
 ## 🧪 Testing
@@ -217,7 +209,7 @@ Verifies all 3 MCP servers are running and responding correctly.
 4. Verify:
    - ✅ Status updates stream in real-time
    - ✅ All 5 tabs populate with content
-   - ✅ Mermaid diagrams render correctly
+   - ✅ Structured markdown renders correctly
    - ✅ ZIP download appears and works
 
 ---
