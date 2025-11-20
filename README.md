@@ -1,6 +1,6 @@
 # 🚀 MVP Agent
 
-**AI-powered MVP Blueprint Generator for MCP Hackathon 2025 – Track 2: MCP In Action (Agents)**
+**AI-powered MVP Blueprint Generator**
 
 Transform any startup idea into a complete, production-ready MVP specification in under 2 minutes. MVP Agent combines AI reasoning with real-time market research to deliver actionable blueprints that engineering teams can implement immediately.
 
@@ -286,33 +286,6 @@ All rights reserved until November 30, 2025.
 
 This project is proprietary until that date and may not be copied, redistributed, or modified without permission.  
 After November 30 2025, it will be released under the MIT License, allowing anyone to use, modify, and distribute it with proper attribution.
-
-
----
-
-## 🏆 MCP 1st Birthday
-
-This project was built for the **Model Context Protocol (MCP) 1st Birthday Hackathon 2025 - Track 2: MCP In Action (Agents)**.
-
-**Track Requirements Met:**
-- ✅ Gradio-based UI
-- ✅ Multiple MCP server integration (3 custom servers)
-- ✅ Planning → Reasoning → Execution flow
-- ✅ Visible reasoning traces (real-time status updates)
-- ✅ Production-ready outputs (5 markdown files + ZIP)
-- ✅ Good UX/UI (orange/black theme, mobile-friendly)
-- ✅ Autonomous agent behavior
-- ✅ Complete documentation
-
-**Tag:** `mcp-in-action-track`
-
----
-
-## 📞 Support
-
-- **Issues:** Report bugs or request features via GitHub Issues
-- **Questions:** Ask in the Community tab on Hugging Face
-- **Demo:** Watch the demo video (coming soon)
 
 ---
 
