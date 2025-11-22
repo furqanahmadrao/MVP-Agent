@@ -266,11 +266,3 @@ jobs:
             Remember: Your job is to catch issues BEFORE they reach production. Be critical but fair!
 
           claude_args: '--allowed-tools "Glob,Grep,LS,Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(cat *),Bash(grep *),Bash(find *)"'
-
-      - name: Add Review Status Label
-        if: success()
-        run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "reviewed"
-        env:
-          GH_TOKEN: ${{ github.token }}
-        continue-on-error: true
