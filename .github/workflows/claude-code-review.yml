@@ -1,0 +1,99 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    # Optional: Only run on specific file changes
+    # paths:
+    #   - "src/**/*.ts"
+    #   - "src/**/*.tsx"
+    #   - "src/**/*.js"
+    #   - "src/**/*.jsx"
+
+jobs:
+  claude-review:
+    # Optional: Filter by PR author
+    # if: |
+    #   github.event.pull_request.user.login == 'external-contributor' ||
+    #   github.event.pull_request.user.login == 'new-developer' ||
+    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better context
+
+      - name: Setup Claude Code Router
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          mkdir -p $HOME/.claude-code-router
+          cat << 'EOF' > $HOME/.claude-code-router/config.json
+          {
+            "LOG": true,
+            "LOG_LEVEL": "info",
+            "NON_INTERACTIVE_MODE": true,
+            "API_TIMEOUT_MS": 600000,
+            "Providers": [
+              {
+                "name": "gemini",
+                "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
+                "api_key": "$GEMINI_API_KEY_1",
+                "models": ["gemini-2.5-flash"],
+                "transformer": {
+                  "use": ["gemini"]
+                }
+              }
+            ],
+            "Router": {
+              "default": "gemini,gemini-2.5-flash"
+            }
+          }
+          EOF
+          echo "✅ Router configured"
+        env:
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+
+      - name: Start Claude Code Router
+        run: |
+          nohup ~/.bun/bin/bunx @musistudio/claude-code-router@latest start &
+          sleep 5
+          if curl -f http://localhost:3456/health 2>/dev/null; then
+            echo "✅ Router is healthy"
+          else
+            echo "⚠️ Health check failed"
+          fi
+        env:
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+
+      - name: Get PR Context
+        id: pr-context
+        run: |
+          FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}..HEAD | wc -l)
+          LINES_CHANGED=$(git diff --shortstat origin/${{ github.base_ref }}..HEAD | grep -oP '\d+(?= insertion)|\d+(?= deletion)' | awk '{s+=$1} END {print s}')
+          echo "files_changed=$FILES_CHANGED" >> $GITHUB_OUTPUT
+          echo "lines_changed=$LINES_CHANGED" >> $GITHUB_OUTPUT
+          echo "📊 PR Stats: $FILES_CHANGED files, ~$LINES_CHANGED lines changed"
+
+      - name: Run Claude Code Review
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_BASE_URL: http://localhost:3456
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
+        with:
+          anthropic_api_key: "router-managed"
+          additional_permissions: |
+            actions: read
+          claude_args: |
+            --allowed-tools "Glob,Grep,LS,Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(cat *),Bash(grep *),Bash(find *)" 
+            --prompt "You are an expert code reviewer and security analyst assigned to review the current GitHub Pull Request. Analyze the PR’s files, diffs, and context; identify 🔴 critical issues (security risks, exposed secrets, breaking changes, data loss, memory leaks, concurrency problems), 🟡 medium issues (code quality, performance, missing logs/tests, API design problems), and 🟢 low issues (style, naming, refactoring opportunities). Provide a structured review summarizing what changed, describing key modifications, giving file-by-file notes, a technical assessment, and then listing issues under 🔴🟡🟢 with clear titles, file paths with line numbers, problem explanation, impact, and recommended fix (with code if useful). Also document positive observations such as clean design or good testing. End with a final verdict (approve, request changes, or needs discussion) and prioritized next steps. Follow the repository's standards (CONTRIBUTING.md, CLAUDE.md) and ensure all feedback is specific, constructive, and production-focused."
+
