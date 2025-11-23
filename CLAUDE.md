@@ -53,3 +53,47 @@ The MVP Agent is a **multi-phase autonomous agent** powered by Google Gemini and
 - **`GEMINI_API_KEY`**: Required for Gemini API access.
 - **`GOOGLE_API_KEY`**: Optional, for enhanced Google Custom Search capabilities.
 - **`GOOGLE_SEARCH_ENGINE_ID`**: Optional, for enhanced Google Custom Search capabilities. These are typically managed via Hugging Face Spaces "Secrets" feature in deployment.
+
+## Project Context and Goals
+
+This project is an autonomous AI agent built for the MCP Hackathon 2025. It transforms startup ideas into complete MVP specifications.
+
+### Core Technologies
+- **Frontend:** Gradio 6.0 (orange/black theme)
+- **AI Models:** Gemini 2.5 Pro, Flash, Flash-8B
+- **MCP Servers:** 3 custom servers (web-search, reddit, markdownify)
+- **Deployment:** Hugging Face Spaces
+- **Language:** Python 3.10+
+
+### Current Status & Next Steps
+- **Status:** The project is implementation-complete and ready for testing and enhancement, followed by deployment.
+- **Immediate Focus:**
+    1.  **Test with real API keys:** Add `GEMINI_API_KEY` to `.env` and verify local generation.
+    2.  **(Optional) Enable real MCP servers:** Add API keys for search and other services if full functionality is needed.
+    3.  **Deploy to Hugging Face Spaces:** Create the space, upload files, configure secrets, and test the live deployment.
+    4.  **Create Demo Video:** Record a 1-3 minute demo for submission.
+
+### Key Guidance for AI Agents
+- **Key Design Decisions:**
+    - Use a multi-model approach for cost optimization (Pro for complex tasks, Flash for simple ones).
+    - Use 3 MCP servers to demonstrate orchestration without excessive complexity.
+    - Use Gradio for its rapid prototyping and native Hugging Face Spaces support.
+- **Common Pitfalls to Avoid:**
+    - Do not start coding before reading the architecture documentation in the `.docs/` folder.
+    - Never hardcode API keys; use environment variables.
+    - Implement robust error handling and fallbacks for all external API/MCP calls.
+    - Add comprehensive logging to trace agent behavior.
+
+### Troubleshooting Guide
+- **If MCP servers fail:**
+    1. Check API keys in environment variables.
+    2. Verify network connectivity and check for rate limits.
+    3. The system should fall back to heuristic/mock data mode.
+- **If Gemini API fails:**
+    1. Check API key validity, quota, and billing.
+    2. Check for rate limits.
+    3. The system should use a fallback model (e.g., Flash instead of Pro).
+- **If Gradio won't start:**
+    1. Check for port conflicts.
+    2. Verify all dependencies in `requirements.txt` are installed.
+    3. Ensure the Python version is 3.10+.
