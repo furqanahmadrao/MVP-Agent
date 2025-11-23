@@ -2,7 +2,7 @@
 
 **Project:** MVP Agent - AI-powered MVP Blueprint Generator  
 **Track:** MCP Hackathon 2025 - Track 2: MCP In Action (Agents)  
-**Last Updated:** November 7, 2025, 9:04 PM PKT
+**Last Updated:** November 23, 2025
 
 ---
 
@@ -26,7 +26,7 @@ An autonomous AI agent that transforms startup ideas into complete MVP specifica
 - Analyzing user intent with Gemini AI
 - Researching markets using MCP servers (web + Reddit)
 - Synthesizing insights with multi-model AI
-- Generating 5 production-ready markdown files
+- Generating 8 production-ready markdown files (overview.md, features.md, architecture.md, design.md, user_flow.md, roadmap.md, business_model.md, testing_plan.md)
 - Providing transparent reasoning traces
 
 ### Core Technologies
@@ -99,7 +99,7 @@ An autonomous AI agent that transforms startup ideas into complete MVP specifica
 - [x] Implement orange/black theme CSS
 - [x] Build input interface (text box + button)
 - [x] Build status display (reasoning trace box)
-- [x] Build output tabs (5 markdown files)
+  - [x] Build output tabs (8 markdown files)
 - [x] Add ZIP download button
 - [x] Test UI responsiveness
 - [x] Real-time status updates with yield
@@ -127,12 +127,15 @@ An autonomous AI agent that transforms startup ideas into complete MVP specifica
 - [x] Implement query generation phase
 - [x] Implement research execution phase
 - [x] Implement research summarization
-- [x] Implement file generation for all 5 outputs
+- [x] Implement file generation for all outputs
+  - [x] Generate overview.md
   - [x] Generate features.md
   - [x] Generate architecture.md
   - [x] Generate design.md
   - [x] Generate user_flow.md
   - [x] Generate roadmap.md
+  - [x] Generate business_model.md
+  - [x] Generate testing_plan.md
 - [x] Create MVPAgent orchestrator class
 
 #### 3E: Error Handling & Validation ✅
@@ -155,7 +158,7 @@ An autonomous AI agent that transforms startup ideas into complete MVP specifica
 - [x] Create `src/prompts.py`
 - [x] Add query generation prompts
 - [x] Add research summary prompts
-- [x] Add file generation prompts (all 5 types)
+- [x] Add file generation prompts (all output types: overview, features, architecture, design, user_flow, roadmap, business_model, testing_plan)
 - [x] Implement template system
 
 **Phase 3 Completion:** 100% ✅
@@ -355,7 +358,7 @@ mvp-agent/
 1. **Test with real API keys** ⚠️ CRITICAL
    - Add GEMINI_API_KEY to .env
    - Test basic generation locally
-   - Verify all 5 files generate correctly
+  - Verify all outputs generate correctly (including overview.md)
    - Test error handling
 
 2. **Optional: Enable real MCP servers**
@@ -402,7 +405,7 @@ When implementing this project, follow this order:
 - **Why Gemini multi-model?** Cost optimization (Pro for complex, Flash for simple)
 - **Why 3 MCP servers?** Minimum to show orchestration, not too complex
 - **Why Gradio?** Fast prototyping, HF Spaces native support
-- **Why 5 files?** Comprehensive but not overwhelming
+- **Why 8 files?** Comprehensive and agent-friendly; overview provides a single-entry summary for humans and LLMs
 - **Why orange/black?** High contrast, professional, memorable
 
 ### Common Pitfalls to Avoid
@@ -482,7 +485,7 @@ When implementing this project, follow this order:
 - [x] **MCP server integration** - 3 servers documented
 - [x] **Planning → Reasoning → Execution flow** - Defined in behavior spec
 - [x] **Visible reasoning traces** - UI design includes status box
-- [x] **Production-ready outputs** - 5 markdown files
+- [x] **Production-ready outputs** - overview.md, features.md, architecture.md, design.md, user_flow.md, roadmap.md, business_model.md, testing_plan.md
 - [x] **Good UX/UI** - Orange/black theme, mobile-friendly
 - [x] **Complete documentation** - 8 comprehensive files
 - [ ] **Demo video** - 1-3 minutes (pending)
@@ -499,7 +502,7 @@ When implementing this project, follow this order:
 
 1. **2025-11-07:** Chose Gemini over Claude for cost efficiency
 2. **2025-11-07:** Selected 3 MCP servers (web, reddit, markdown)
-3. **2025-11-07:** Decided on 5 output files (not 3 or 7)
+3. **2025-11-07:** Decided on 8 output files (overview + 7 detailed outputs)
 4. **2025-11-07:** Orange/black theme for distinctiveness
 5. **2025-11-07:** Gradio over Streamlit for HF Spaces compatibility
 
@@ -545,7 +548,7 @@ When implementing this project, follow this order:
 
 ---
 
-**Last Updated:** November 7, 2025, 9:25 PM PKT  
+**Last Updated:** November 23, 2025  
 **Status:** Implementation Complete, Ready for HF Spaces Deployment  
 **Next Update:** After HF Spaces deployment or demo video creation
 

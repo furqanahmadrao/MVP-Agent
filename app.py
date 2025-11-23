@@ -221,11 +221,14 @@ def generate_mvp(idea: str):
         status_box: "🤖 Initializing MVP Agent...",
         output_tabs: gr.Tabs(visible=False),
         zip_file: gr.File(visible=False),
+        overview_display: "",
         features_display: "",
         architecture_display: "",
         design_display: "",
         user_flow_display: "",
-        roadmap_display: ""
+        roadmap_display: "",
+        business_model_display: "",
+        testing_plan_display: ""
     }
 
     error_handler = get_error_handler()
@@ -237,11 +240,14 @@ def generate_mvp(idea: str):
             status_box: f"❌ {error_msg}",
             output_tabs: gr.Tabs(visible=False),
             zip_file: gr.File(visible=False),
+            overview_display: "",
             features_display: "",
             architecture_display: "",
             design_display: "",
             user_flow_display: "",
-            roadmap_display: ""
+            roadmap_display: "",
+            business_model_display: "",
+            testing_plan_display: ""
         }
         return
 
@@ -272,11 +278,14 @@ def generate_mvp(idea: str):
             status_box: "\n".join(status_display),
             output_tabs: gr.Tabs(visible=False),
             zip_file: gr.File(visible=False),
+            overview_display: "",
             features_display: "",
             architecture_display: "",
             design_display: "",
             user_flow_display: "",
-            roadmap_display: ""
+            roadmap_display: "",
+            business_model_display: "",
+            testing_plan_display: ""
         }
         time.sleep(10)
         
@@ -292,7 +301,8 @@ def generate_mvp(idea: str):
             architecture_display: "",
             design_display: "",
             user_flow_display: "",
-            roadmap_display: ""
+            roadmap_display: "",
+            business_model_display: ""
         }
         time.sleep(10)
         
@@ -306,7 +316,8 @@ def generate_mvp(idea: str):
             architecture_display: "",
             design_display: "",
             user_flow_display: "",
-            roadmap_display: ""
+            roadmap_display: "",
+            business_model_display: ""
         }
         time.sleep(10)
         
@@ -319,7 +330,8 @@ def generate_mvp(idea: str):
             architecture_display: "",
             design_display: "",
             user_flow_display: "",
-            roadmap_display: ""
+            roadmap_display: "",
+            business_model_display: ""
         }
         time.sleep(10)
         
@@ -334,7 +346,8 @@ def generate_mvp(idea: str):
             architecture_display: "",
             design_display: "",
             user_flow_display: "",
-            roadmap_display: ""
+            roadmap_display: "",
+            business_model_display: ""
         }
         time.sleep(10)
         
@@ -462,11 +475,14 @@ def generate_mvp(idea: str):
         time.sleep(10)
         
         # Extract content for display BEFORE saving to disk (like working app)
+        overview_content = mvp_files.get("overview_md", "# Error\nFailed to generate overview.")
         features_content = mvp_files.get("features_md", "# Error\nFailed to generate features.")
         architecture_content = mvp_files.get("architecture_md", "# Error\nFailed to generate architecture.")
         design_content = mvp_files.get("design_md", "# Error\nFailed to generate design.")
         user_flow_content = mvp_files.get("user_flow_md", "# Error\nFailed to generate user flow.")
         roadmap_content = mvp_files.get("roadmap_md", "# Error\nFailed to generate roadmap.")
+        business_model_content = mvp_files.get("business_model_md", "# Error\nFailed to generate business model.")
+        testing_plan_content = mvp_files.get("testing_plan_md", "# Error\nFailed to generate testing plan.")
         
         # Save files to disk
         file_paths = file_mgr.save_mvp_files(mvp_files, idea)
@@ -484,11 +500,14 @@ def generate_mvp(idea: str):
             status_box: final_status,
             zip_file: gr.File(value=zip_file_path, visible=True),
             output_tabs: gr.Tabs(visible=True),
+            overview_display: overview_content,
             features_display: features_content,
             architecture_display: architecture_content,
             design_display: design_content,
             user_flow_display: user_flow_content,
-            roadmap_display: roadmap_content
+            roadmap_display: roadmap_content,
+            business_model_display: business_model_content,
+            testing_plan_display: testing_plan_content
         }
         
     except MVPAgentError as e:
@@ -499,11 +518,14 @@ def generate_mvp(idea: str):
             status_box: error_msg,
             output_tabs: gr.Tabs(visible=False),
             zip_file: gr.File(visible=False),
+            overview_display: "",
             features_display: "",
             architecture_display: "",
             design_display: "",
             user_flow_display: "",
-            roadmap_display: ""
+            roadmap_display: "",
+            business_model_display: "",
+            testing_plan_display: ""
         }
         return
         
@@ -515,11 +537,14 @@ def generate_mvp(idea: str):
             status_box: error_msg,
             output_tabs: gr.Tabs(visible=False),
             zip_file: gr.File(visible=False),
+            overview_display: "",
             features_display: "",
             architecture_display: "",
             design_display: "",
             user_flow_display: "",
-            roadmap_display: ""
+            roadmap_display: "",
+            business_model_display: "",
+            testing_plan_display: ""
         }
         return
         
@@ -557,7 +582,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
     gr.Markdown("""
     # 🚀 MVP Agent
     ### AI-powered MVP Blueprint Generator
-    Transform your startup idea into a complete, actionable MVP specification in seconds.
+    Transform your startup idea into a complete, actionable MVP specification in seconds (all results are structured for direct use by people and LLM-based agents).
     """)
     
     # Input section
@@ -596,20 +621,29 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
 
     # Output tabs (initially hidden)
     with gr.Tabs(visible=False) as output_tabs:
+        with gr.Tab("📝 Overview"):
+            overview_display = gr.Markdown("", elem_classes="markdown-body")
+
         with gr.Tab("📋 Features"):
             features_display = gr.Markdown("", elem_classes="markdown-body")
-        
+
         with gr.Tab("🏗️ Architecture"):
             architecture_display = gr.Markdown("", elem_classes="markdown-body")
-        
+
         with gr.Tab("🎨 Design"):
             design_display = gr.Markdown("", elem_classes=["markdown-body"])
-        
+
         with gr.Tab("🗺️ User Flow"):
             user_flow_display = gr.Markdown("", elem_classes="markdown-body")
-        
+
         with gr.Tab("📅 Roadmap"):
             roadmap_display = gr.Markdown("", elem_classes="markdown-body")
+
+        with gr.Tab("💼 Business Model"):
+            business_model_display = gr.Markdown("", elem_classes="markdown-body")
+
+        with gr.Tab("🧪 Testing Plan"):
+            testing_plan_display = gr.Markdown("", elem_classes="markdown-body")
     
     # Footer
     gr.Markdown("""
@@ -627,11 +661,14 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
             status_box,
             zip_file,
             output_tabs,
+            overview_display,
             features_display,
             architecture_display,
             design_display,
             user_flow_display,
             roadmap_display,
+            business_model_display,
+            testing_plan_display,
         ],
         show_progress="hidden"  # Hide Gradio's default processing window
     )

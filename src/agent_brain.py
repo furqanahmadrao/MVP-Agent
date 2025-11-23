@@ -303,11 +303,14 @@ class MVPAgent:
             
             # Validate all files present
             required_keys = [
+                "overview_md",
                 "features_md",
                 "architecture_md",
                 "design_md",
                 "user_flow_md",
-                "roadmap_md"
+                "roadmap_md",
+                "business_model_md",
+                "testing_plan_md"
             ]
             
             for key in required_keys:
@@ -320,10 +323,8 @@ class MVPAgent:
                 content = files.get(key, "")
                 # First, normalize via MCP
                 normalized = self.markdownify_mcp.format_markdown(content)
-                
                 # Then sanitize to remove invisible characters
                 sanitized = sanitize_markdown(normalized)
-                
                 normalized_files[key] = sanitized
 
             self.state.data["mvp_files"] = normalized_files
@@ -341,10 +342,11 @@ class MVPAgent:
                 )
                 
                 # Validate
-                for key in ["features_md", "architecture_md", "design_md", "user_flow_md", "roadmap_md"]:
+
+                for key in ["overview_md", "features_md", "architecture_md", "design_md", "user_flow_md", "roadmap_md", "business_model_md", "testing_plan_md"]:
                     if key not in files:
                         raise ValueError(f"Missing {key}")
-                
+
                 return files
             except Exception as e2:
                 # If both fail, raise to trigger main fallback
@@ -383,11 +385,14 @@ class MVPAgent:
             # Absolute last resort: Hardcoded templates
             self._update_status("⚠️  Using basic templates...")
             return {
+                "overview_md": f"# [Product Name] – MVP Blueprint Overview\n\n*Error occurred. Basic template provided.*\n\n## Tagline\n- One-line summary.\n\n## Purpose & Vision\n- What the product aims to achieve.\n\n## What’s Included\n- List of files.\n\n## How to Use This Blueprint\n- Instructions for humans and agents.\n\n## Style & Formatting Conventions\n- Markdown, tables, diagrams.\n\n## Glossary\n- Key terms.\n\n## References\n- Research links.\n\n## Contact/Attribution\n- Generator, version/date, contact info.",
                 "features_md": f"# MVP Features for: {idea}\n\n*Error occurred. Basic template provided.*\n\n## Core Features\n- Feature 1\n- Feature 2\n- Feature 3",
                 "architecture_md": f"# Architecture for: {idea}\n\n*Error occurred. Basic template provided.*\n\n## Tech Stack\n- Frontend\n- Backend\n- Database",
                 "design_md": f"# Design for: {idea}\n\n*Error occurred. Basic template provided.*\n\n## Design Principles\n- Simple\n- Intuitive\n- Accessible",
                 "user_flow_md": f"# User Flow for: {idea}\n\n*Error occurred. Basic template provided.*\n\n## Main Flow\n1. User lands\n2. User interacts\n3. User completes",
-                "roadmap_md": f"# Roadmap for: {idea}\n\n*Error occurred. Basic template provided.*\n\n## Timeline\n- Week 1-2: Setup\n- Week 3-4: Build\n- Week 5-6: Launch"
+                "roadmap_md": f"# Roadmap for: {idea}\n\n*Error occurred. Basic template provided.*\n\n## Timeline\n- Week 1-2: Setup\n- Week 3-4: Build\n- Week 5-6: Launch",
+                "business_model_md": f"# Business Model for: {idea}\n\n*Error occurred. Basic template provided.*\n\n## Executive Summary\n- Describe the business vision here.\n\n## Business Model Canvas\n| Key Partners | Key Activities | Key Resources | Value Propositions | Customer Relationships | Channels | Customer Segments | Cost Structure | Revenue Streams |\n|--------------|---------------|--------------|--------------------|-----------------------|----------|-------------------|---------------|----------------|\n| Example      | Example       | Example      | Example            | Example               | Example  | Example           | Example       | Example        |\n\n## Revenue Model\n- List revenue streams here.\n\n## Cost Structure\n- List major costs here.\n\n## Go-to-Market Strategy\n- List main strategies here.\n\n## Competitive Advantage\n- List differentiators here.\n\n## Risks & Mitigations\n- List risks and mitigations here.\n\n## Edge Cases & Fallbacks\n- List edge cases here.\n\n## Implementation Hints & Best Practices\n- List best practices here.",
+                "testing_plan_md": f"# Testing Plan for: {idea}\n\n*Error occurred. Basic template provided.*\n\n## Test Strategy\n- Manual and automated\n\n## Test Cases\n- Test 1\n- Test 2\n- Test 3\n\n## Tools\n- pytest\n- Selenium\n\n## Success Criteria\n- All tests pass\n\n## Risks\n- List risks here."
             }
     
     def get_token_usage(self) -> int:
