@@ -30,7 +30,7 @@ jobs:
               {
                 "name": "gemini",
                 "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
-                "api_key": "$GEMINI_API_KEY",
+                "api_key": "$GEMINI_API_KEY_1",
                 "models": ["gemini-2.5-flash"],
                 "transformer": {
                   "use": ["gemini"]
@@ -44,7 +44,7 @@ jobs:
           EOF
           echo "✅ Router configured"
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
 
       - name: Start Claude Code Router
         run: |
@@ -56,14 +56,14 @@ jobs:
             echo "⚠️ Health check failed"
           fi
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
 
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
         env:
           ANTHROPIC_BASE_URL: http://localhost:3456
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY_1: ${{ secrets.GEMINI_API_KEY_1 }}
         with:
           anthropic_api_key: "router-managed"
           track_progress: true
