@@ -1,26 +1,3 @@
----
-title: MVP Agent - AI-Powered Blueprint Generator
-emoji: "🚀"
-colorFrom: indigo
-colorTo: purple
-sdk: gradio
-sdk_version: 5.49.1
-app_file: app.py
-pinned: false
-tags:
-   - mcp-in-action-track
-   - agents
-   - mvp
-   - market-research
-   - gemini
-   - mcp
-   - startup
-   - product-management
-models:
-   - google/gemini-2.5-pro
-   - google/gemini-2.5-flash
-short_description: AI agent that generates MVP blueprints and roadmaps
----
 # 🚀 MVP Agent
 
 **AI-powered MVP Blueprint Generator for MCP Hackathon 2025 – Track 2: MCP In Action (Agents)**
