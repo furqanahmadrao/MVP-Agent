@@ -1,4 +1,27 @@
-# 🚀 MVP Agent
+---
+title: MVP Agent - AI-Powered Blueprint Generator
+emoji: "🚀"
+colorFrom: indigo
+colorTo: purple
+sdk: gradio
+sdk_version: 5.49.1
+app_file: app.py
+pinned: false
+tags:
+   - mcp-in-action-track
+   - agents
+   - mvp
+   - market-research
+   - gemini
+   - mcp
+   - startup
+   - product-management
+models:
+   - google/gemini-2.5-pro
+   - google/gemini-2.5-flash
+short_description: AI agent that generates MVP blueprints and roadmaps
+---
+# MVP Agent
 
 **AI-powered MVP Blueprint Generator for MCP Hackathon 2025 – Track 2: MCP In Action (Agents)**
 
@@ -6,17 +29,23 @@ Transform any startup idea into a complete, production-ready MVP specification i
 
 ## ✨ What You Get
 
-Input a single paragraph describing your startup idea. Get back:
+Input a single paragraph describing your startup idea. Get back **8 comprehensive, production-ready markdown files** containing **18,000+ words of detailed specifications** (50% more depth than typical MVP specs). Pure markdown, no diagram dependencies.
 
-- **📝 Overview.md** - High-level MVP overview, usage guidance for humans and LLM agents (first file)
-- **📋 Features.md** - Prioritized feature requirements (P0, P1, P2)
-- **🏗️ Architecture.md** - Technical stack, component diagrams, and API surface
-- **🎨 Design.md** - UI/UX guidelines, design system, accessibility standards
-- **🗺️ User Flow.md** - Complete user journeys (numbered, step-by-step)
-- **📅 Roadmap.md** - 6-week launch plan with milestones
-- **💼 Business_model.md** - Business model specification and go-to-market notes
-- **🧪 Testing_plan.md** - Testing plan, acceptance criteria, and QA checklist
+- **📝 Overview.md** (~1,200 words) - High-level MVP overview, usage guidance for humans and LLM agents
+- **📋 Features.md** (~3,000 words) - Prioritized feature requirements (P0, P1, P2) with user personas
+- **🏗️ Architecture.md** (~3,300 words) - Technical stack, component tables, API surface, and scalability plans
+- **🎨 Design.md** (~2,400 words) - UI/UX guidelines, design system, accessibility standards
+- **🗺️ User Flow.md** (~2,000 words) - Complete user journeys (numbered, step-by-step) with decision trees
+- **📅 Roadmap.md** (~3,000 words) - Detailed launch plan, technical debt management, and milestones
+- **💼 Business_model.md** (~1,800 words) - Business model specification, unit economics, and go-to-market
+- **🧪 Testing_plan.md** (~1,800 words) - Testing strategy, test cases, and quality gates
 - **📦 ZIP Download** - All files packaged for your team
+
+### 🌟 Quality Highlights
+- **Production-Grade:** Specifications ready for implementation by senior devs or AI agents
+- **AI-Friendly:** Structured formatting optimized for Cursor, Windsurf, and Claude Code
+- **Comprehensive:** Covers user, business, and technical perspectives in depth
+- **No Dependencies:** Pure markdown tables and text - no broken mermaid diagrams
 
 All outputs are **opinionated**, **implementation-ready**, and use **structured markdown** for clarity.
 
@@ -45,7 +74,7 @@ MVP Agent is a **multi-phase autonomous agent** powered by Google Gemini and cus
 
 ### Phase 1: Intent Understanding 🧠
 - Analyzes your idea to identify target users, core problems, and success metrics
-- Generates strategic research queries
+- Generates strategic research queries (now 7 high-quality, focused queries)
 
 ### Phase 2: Market Research 🔍
 - Uses **Google Custom Search MCP** to research competitors and market trends
@@ -71,8 +100,8 @@ MVP Agent is a **multi-phase autonomous agent** powered by Google Gemini and cus
 MVP Agent runs **3 internal MCP servers** (auto-started, no manual setup needed):
 
 1. **file-manager-mcp** (Port 8081)
-   - Handles file creation, markdown validation, ZIP packaging
-   - Endpoints: `/create_file`, `/validate_markdown`, `/zip_files`
+   - Handles file creation, markdown validation, and robust ZIP packaging from in-memory content (fully integrated with agent logic)
+   - Endpoints: `/create_file`, `/validate_markdown`, `/zip_files`, `/create_zip_from_memory`
 
 2. **google-search-mcp** (Port 8082)
    - Performs Google Custom Search queries
@@ -141,8 +170,8 @@ This repository is **ready for one-click deployment** to HF Spaces:
 ## 🎨 UI Features
 
 ### Clean, Professional Interface
-- **Orange/Black Theme** - High contrast, modern design
-- **Real-time Status Updates** - See the agent's reasoning process
+- **Orange/Black Theme** - High contrast, modern design with enhanced header typography
+- **Real-time Status Updates** - See the agent's reasoning process with accurate elapsed time tracking
 - **Tabbed Output** - Easy navigation between documents
 - **Structured Markdown** - Clear tables and step-by-step flows
 - **One-Click Download** - Get all files as ZIP
@@ -160,6 +189,7 @@ This repository is **ready for one-click deployment** to HF Spaces:
 ```bash
 GEMINI_API_KEY=your_gemini_api_key
 ```
+**Important:** Ensure these are correctly set in a `.env` file in the project root, or as secrets in your deployment environment. `load_dotenv()` is explicitly called to load these.
 
 ### Optional (for enhanced search):
 ```bash

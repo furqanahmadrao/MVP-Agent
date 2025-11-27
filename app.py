@@ -1,9 +1,7 @@
-"""
-MVP Agent - AI-powered MVP Blueprint Generator
-For MCP Hackathon 2025 - Track 2: MCP In Action (Agents)
+# MVP Agent - AI-powered MVP Blueprint Generator
+# For MCP Hackathon 2025 - Track 2: MCP In Action (Agents)
+# This is the main Gradio application file.
 
-This is the main Gradio application file.
-"""
 
 from src import hf_compat  # noqa: F401  # Ensure HfFolder compatibility for gradio.oauth
 import gradio as gr
@@ -11,17 +9,15 @@ import os
 import time
 from dotenv import load_dotenv
 import threading
-from threading import Event, Lock
-
-# Load environment variables
-load_dotenv()
-
-# Import our modules
+from typing import Dict, List, Any
 from src.agent_brain import create_agent
 from src.file_manager import get_file_manager
 from src.error_handler import get_error_handler, MVPAgentError, ErrorCategory
 from src.validators import validate_idea, sanitize_idea
 from src.mcp_process_manager import MCPManager
+
+# Explicitly load environment variables
+load_dotenv()
 
 # Custom CSS for orange/black theme
 CUSTOM_CSS = """
@@ -32,6 +28,11 @@ CUSTOM_CSS = """
     --text-white: #ffffff;
     --text-gray: #cccccc;
     --border-gray: #333333;
+    --info-color: #3498db;     /* Blue */
+    --warning-color: #f39c12;  /* Orange */
+    --error-color: #e74c3c;    /* Red */
+    --success-color: #2ecc71;  /* Green */
+    --debug-color: #95a5a6;    /* Gray */
 }
 
 /* Main container */
@@ -66,15 +67,39 @@ CUSTOM_CSS = """
     transform: scale(1.05) !important;
 }
 
-/* Status box */
-#status-box textarea {
-    background-color: var(--darker-bg) !important;
-    color: var(--primary-orange) !important;
-    border: 1px solid var(--border-gray) !important;
-    border-radius: 8px !important;
-    font-family: 'Courier New', monospace !important;
-    font-size: 14px !important;
+/* New Status display components */
+.status-metric {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--primary-orange);
+    text-align: center;
 }
+
+#activity-log-display {
+    background-color: var(--darker-bg);
+    border: 1px solid var(--border-gray);
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    height: 300px; /* Fixed height for scrolling */
+    overflow-y: auto; /* Enable scrolling */
+    padding: 10px;
+    color: var(--text-white);
+}
+
+.log-entry {
+    padding: 2px 0;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.1);
+}
+.log-entry:last-child {
+    border-bottom: none;
+}
+.log-info { color: var(--info-color); }
+.log-warning { color: var(--warning-color); }
+.log-error { color: var(--error-color); }
+.log-success { color: var(--success-color); }
+.log-debug { color: var(--debug-color); }
+
 
 /* Tabs */
 .tab-nav button {
@@ -174,6 +199,33 @@ CUSTOM_CSS = """
 #zip-file .upload {
     display: none !important;
 }
+
+/* Header Styling */
+.header-title h1 {
+    color: var(--primary-orange) !important;
+    font-family: 'Arial', sans-serif !important;
+    text-align: center;
+    font-size: 3.5em !important; /* Larger font size */
+    font-weight: bold !important; /* Explicitly bold */
+    margin-bottom: 5px !important; /* Reduced margin */
+}
+
+.header-title h3 {
+    color: var(--text-white) !important;
+    font-family: 'Arial', sans-serif !important;
+    text-align: center;
+    font-size: 1.6em !important; /* Slightly larger for tagline */
+    margin-top: 5px !important; /* Reduced margin */
+    font-weight: normal !important;
+}
+
+.header-title p {
+    color: var(--text-gray) !important;
+    text-align: center;
+    font-size: 1.1em !important;
+    max-width: 800px;
+    margin: 10px auto !important;
+}
 """
 
 # Initialize agent (will be created on first use)
@@ -210,367 +262,207 @@ def get_file_mgr():
         _file_manager = get_file_manager()
     return _file_manager
 
+# Helper function to format structured log entries into HTML
+def format_log_entries(log_events: List[Dict]) -> str:
+    html_log = ""
+    for event in log_events:
+        timestamp = time.strftime("%H:%M:%S", time.localtime(event.get("timestamp", time.time())))
+        message_type = event.get("type", "INFO").lower()
+        message = event.get("message", "No Message").replace("<", "&lt;").replace(">", "&gt;") # Sanitize message
+        phase = event.get("phase", "N/A")
+        
+        color_class = f"log-{message_type}"
+        
+        html_log += f"<div class='log-entry'><span class='{color_class}'>[{timestamp}] [{phase.upper()}] {message}</span></div>"
+    return f"<div id='log-container'>{html_log}</div>"
+
+
 # Main MVP generation function
-def generate_mvp(idea: str):
+def generate_mvp(idea: str, tech_preference: str = "", platform: str = "", constraint: str = ""):
     """
     Main function to generate MVP specifications using the real agent.
     """
     # CRITICAL: First yield MUST happen immediately to prevent Gradio's processing window
-    # This ensures the user sees our custom agent status box from the very first moment
-    yield {
-        status_box: "🤖 Initializing MVP Agent...",
+    # Initial state for display components
+    initial_yield = {
+        current_phase_display: "⚡ Current Phase: Initializing",
+        elapsed_time_display: "⏱️ Elapsed Time: 0.0s",
+        tokens_used_display: "🧠 Tokens Used: 0",
+        activity_log_display: format_log_entries([{"message": "Ready to generate your MVP blueprint.", "type": "INFO", "phase": "idle"}]),
         output_tabs: gr.Tabs(visible=False),
         zip_file: gr.File(visible=False),
-        overview_display: "",
-        features_display: "",
-        architecture_display: "",
-        design_display: "",
-        user_flow_display: "",
-        roadmap_display: "",
-        business_model_display: "",
-        testing_plan_display: ""
+        overview_display: "", features_display: "", architecture_display: "",
+        design_display: "", user_flow_display: "", roadmap_display: "",
+        business_model_display: "", testing_plan_display: ""
     }
+    yield initial_yield
 
     error_handler = get_error_handler()
 
     # Validate input
     is_valid, error_msg = validate_idea(idea)
     if not is_valid:
+        error_event = {"message": error_msg, "type": "ERROR", "phase": "validation", "timestamp": time.time()}
         yield {
-            status_box: f"❌ {error_msg}",
+            current_phase_display: "❌ Error",
+            elapsed_time_display: "-",
+            tokens_used_display: "-",
+            activity_log_display: format_log_entries([error_event]),
             output_tabs: gr.Tabs(visible=False),
             zip_file: gr.File(visible=False),
-            overview_display: "",
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: "",
-            business_model_display: "",
-            testing_plan_display: ""
+            # ... keep other empty fields ...
+            overview_display: "", features_display: "", architecture_display: "",
+            design_display: "", user_flow_display: "", roadmap_display: "",
+            business_model_display: "", testing_plan_display: ""
         }
         return
 
     # Sanitize input
     idea = sanitize_idea(idea)
     
-    try:
-        # Get agent instance
-        agent = get_agent()
-        file_mgr = get_file_mgr()
-        
-        # Track status updates with real-time display
-        status_log = []
-        
-        def status_callback(message: str):
-            """Callback to update status in real-time"""
-            status_log.append(message)
-            # Return updated status (will be used by yields below)
-            return "\n".join(status_log)
-        
-        # Set up callback but we'll manually yield updates
-        status_display = ["🤖 Initializing MVP Agent..."]
-        time.sleep(1)
-        
-        # Phase 1: Understanding intent
-        status_display.append("🧠 Understanding your startup idea...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            overview_display: "",
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: "",
-            business_model_display: "",
-            testing_plan_display: ""
-        }
-        time.sleep(10)
-        
-        # Generate search queries (AI call happens here)
-        queries = agent._generate_search_queries(idea)
-        
-        status_display.append("✅ Intent understood - planning research strategy")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: "",
-            business_model_display: ""
-        }
-        time.sleep(10)
-        
-        # Phase 2: Research
-        status_display.append("🔍 Searching for competitor features...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: "",
-            business_model_display: ""
-        }
-        time.sleep(10)
-        
-        status_display.append("🔍 Analyzing user feedback from web sources...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: "",
-            business_model_display: ""
-        }
-        time.sleep(10)
-        
-        research_results = agent._conduct_research(queries)
-        
-        status_display.append("✅ Research complete - found valuable insights")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: "",
-            business_model_display: ""
-        }
-        time.sleep(10)
-        
-        # Phase 3: Analysis
-        status_display.append("🧠 Analyzing market gaps and opportunities...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        status_display.append("📊 Identifying core problems and target audience...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        research_summary = agent._summarize_research(idea, research_results)
-        
-        status_display.append("✅ Analysis complete - key insights identified")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        # Phase 4: Planning & Generation
-        status_display.append("✨ Planning feature prioritization (P0, P1, P2)...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        status_display.append("🏗️ Designing technical architecture...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        status_display.append("🎨 Creating UX design philosophy...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        status_display.append("🗺️ Mapping user flows and journeys...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        status_display.append("📅 Building 6-week launch roadmap...")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        mvp_files = agent._generate_files(idea, research_summary)
-        
-        status_display.append("✅ All MVP files generated successfully!")
-        yield {
-            status_box: "\n".join(status_display),
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        time.sleep(10)
-        
-        # Extract content for display BEFORE saving to disk (like working app)
-        overview_content = mvp_files.get("overview_md", "# Error\nFailed to generate overview.")
-        features_content = mvp_files.get("features_md", "# Error\nFailed to generate features.")
-        architecture_content = mvp_files.get("architecture_md", "# Error\nFailed to generate architecture.")
-        design_content = mvp_files.get("design_md", "# Error\nFailed to generate design.")
-        user_flow_content = mvp_files.get("user_flow_md", "# Error\nFailed to generate user flow.")
-        roadmap_content = mvp_files.get("roadmap_md", "# Error\nFailed to generate roadmap.")
-        business_model_content = mvp_files.get("business_model_md", "# Error\nFailed to generate business model.")
-        testing_plan_content = mvp_files.get("testing_plan_md", "# Error\nFailed to generate testing plan.")
-        
-        # Save files to disk
-        file_paths = file_mgr.save_mvp_files(mvp_files, idea)
-        
-        # Final status
-        status_display.append("✅ Complete! Your MVP blueprint is ready.")
-        status_display.append("� Download your complete blueprint below")
-        final_status = "\n".join(status_display)
+    # Shared state for thread communication
+    state = {
+        "status_events": [], # Store structured events
+        "files": None,
+        "error": None,
+        "done": False,
+        "current_phase": "idle",
+        "elapsed_time": 0.0,
+        "tokens_used": 0
+    }
 
-        # Get ZIP file path
-        zip_file_path = file_paths.get('zip', None)
+    def agent_worker():
+        try:
+            # Create a fresh agent instance for thread safety
+            api_key = os.getenv("GEMINI_API_KEY")
+            if not api_key:
+                raise ValueError("GEMINI_API_KEY not found. Check .env file.")
+                
+            agent = create_agent(api_key)
+            file_mgr = get_file_mgr()
+            
+            def status_callback(status_event: Dict):
+                state["status_events"].append(status_event)
+                state["current_phase"] = status_event.get("phase", "N/A")
+                state["elapsed_time"] = status_event.get("elapsed_time", 0.0)
+                state["tokens_used"] = status_event.get("tokens_used", 0)
+                
+            agent.set_status_callback(status_callback)
+            
+            # The agent_brain.py methods will now emit all necessary status updates
+            queries = agent._generate_search_queries(idea)
+            research_results = agent._conduct_research(queries)
+            research_summary = agent._summarize_research(idea, research_results)
+            
+            mvp_files = agent._generate_files(
+                idea, 
+                research_summary, 
+                tech_preference=tech_preference,
+                platform=platform,
+                constraint=constraint
+            )
+            
+            # Final success message will be from agent_brain, but we need to ensure files are saved
+            paths = file_mgr.save_mvp_files(mvp_files, idea)
+            
+            state["files"] = (mvp_files, paths)
+            state["done"] = True
+            
+        except Exception as e:
+            state["error"] = e
+            state["done"] = True
 
-        # Final yield with all outputs - use simple direct assignment like working app
+    # Start worker thread
+    t = threading.Thread(target=agent_worker)
+    t.start()
+    
+    start_time = time.time()
+
+    # Loop and yield while worker is running
+    last_event_count = 0
+    final_elapsed_time = 0.0 # To store the final time
+    while not state["done"]:
+        elapsed = time.time() - start_time
+        final_elapsed_time = elapsed # Update here in every iteration
+        
+        # Only update log if new events arrived, but always update timer
         yield {
-            status_box: final_status,
-            zip_file: gr.File(value=zip_file_path, visible=True),
+            current_phase_display: f"⚡ Current Phase: {state['current_phase'].upper()}",
+            elapsed_time_display: f"⏱️ Elapsed Time: {elapsed:.1f}s",
+            tokens_used_display: f"🧠 Tokens Used: {state['tokens_used']}",
+            activity_log_display: format_log_entries(state["status_events"]),
+            output_tabs: gr.Tabs(visible=False),
+            zip_file: gr.File(visible=False),
+            overview_display: "", features_display: "", architecture_display: "",
+            design_display: "", user_flow_display: "", roadmap_display: "",
+            business_model_display: "", testing_plan_display: ""
+        }
+        
+        if len(state["status_events"]) > last_event_count:
+            last_event_count = len(state["status_events"])
+            
+        time.sleep(0.1) # Check for updates more frequently
+
+    # Handle completion
+    if state["error"]:
+        e = state["error"]
+        # Log the error event
+        error_event = {}
+        if isinstance(e, MVPAgentError):
+            error_msg = f"❌ {e.user_message}\n\nTechnical Details: {e.message}"
+            error_event = {"message": error_msg, "type": "ERROR", "phase": state["current_phase"], "timestamp": time.time(), "elapsed_time": state["elapsed_time"], "tokens_used": state["tokens_used"], "details": {"exception": str(e)}}
+        else:
+            error_msg = (
+                f"⚠️ Unexpected Error: {str(e)}\n\n"
+                f"Don't worry! Your request has been logged.\n"
+                f"Please try:\n"
+                f"1. Simplifying your idea description\n"
+                f"2. Waiting a moment and trying again\n"
+                f"3. Checking your internet connection\n\n"
+                f"If the problem persists, check the logs/ folder for details."
+            )
+            error_event = {"message": error_msg, "type": "ERROR", "phase": state["current_phase"], "timestamp": time.time(), "elapsed_time": state["elapsed_time"], "tokens_used": state["tokens_used"], "details": {"exception": str(e)}}
+            error_handler.logger.log_error(e, {"idea": idea[:50]})
+
+        # Append final error to status_events for display
+        state["status_events"].append(error_event)
+        
+        yield {
+            current_phase_display: f"❌ Error in Phase: {state['current_phase'].upper()}",
+            elapsed_time_display: f"⏱️ Elapsed Time: {final_elapsed_time:.1f}s", # Use the stored final time
+            tokens_used_display: f"🧠 Tokens Used: {state['tokens_used']}",
+            activity_log_display: format_log_entries(state["status_events"]),
+            output_tabs: gr.Tabs(visible=False),
+            zip_file: gr.File(visible=False),
+            overview_display: "", features_display: "", architecture_display: "",
+            design_display: "", user_flow_display: "", roadmap_display: "",
+            business_model_display: "", testing_plan_display: ""
+        }
+    else:
+        # Success
+        mvp_files, paths = state["files"]
+        zip_path = paths.get('zip')
+        
+        # Final success messages from app.py
+        state["status_events"].append({"message": "✅ Complete! Your MVP blueprint is ready.", "type": "SUCCESS", "phase": "complete", "timestamp": time.time(), "elapsed_time": state["elapsed_time"], "tokens_used": state["tokens_used"]})
+        state["status_events"].append({"message": "⬇️ Download your complete blueprint below", "type": "INFO", "phase": "complete", "timestamp": time.time(), "elapsed_time": state["elapsed_time"], "tokens_used": state["tokens_used"]})
+        
+        yield {
+            current_phase_display: f"✅ Generation Complete!",
+            elapsed_time_display: f"⏱️ Total Time: {final_elapsed_time:.1f}s", # Use the stored final time
+            tokens_used_display: f"🧠 Total Tokens: {state['tokens_used']}", # Use the final tokens from agent_brain
+            activity_log_display: format_log_entries(state["status_events"]),
+            zip_file: gr.File(value=zip_path, visible=True),
             output_tabs: gr.Tabs(visible=True),
-            overview_display: overview_content,
-            features_display: features_content,
-            architecture_display: architecture_content,
-            design_display: design_content,
-            user_flow_display: user_flow_content,
-            roadmap_display: roadmap_content,
-            business_model_display: business_model_content,
-            testing_plan_display: testing_plan_content
+            overview_display: mvp_files.get("overview_md", ""),
+            features_display: mvp_files.get("features_md", ""),
+            architecture_display: mvp_files.get("architecture_md", ""),
+            design_display: mvp_files.get("design_md", ""),
+            user_flow_display: mvp_files.get("user_flow_md", ""),
+            roadmap_display: mvp_files.get("roadmap_md", ""),
+            business_model_display: mvp_files.get("business_model_md", ""),
+            testing_plan_display: mvp_files.get("testing_plan_md", "")
         }
-        
-    except MVPAgentError as e:
-        # Our custom errors with user-friendly messages
-        error_handler.logger.log_error(e, {"idea": idea[:50]})
-        error_msg = f"❌ {e.user_message}\n\nTechnical Details: {e.message}"
-        yield {
-            status_box: error_msg,
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            overview_display: "",
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: "",
-            business_model_display: "",
-            testing_plan_display: ""
-        }
-        return
-        
-    except ValueError as e:
-        # API key / configuration errors
-        error_handler.logger.log_error(e, {"context": "configuration"})
-        error_msg = f"❌ Configuration Error: {str(e)}\n\nPlease check:\n1. GEMINI_API_KEY is set in .env file\n2. API key is valid and has quota remaining"
-        yield {
-            status_box: error_msg,
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            overview_display: "",
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: "",
-            business_model_display: "",
-            testing_plan_display: ""
-        }
-        return
-        
-    except Exception as e:
-        # Unexpected errors - log and provide helpful message
-        error_handler.logger.log_error(e, {"idea": idea[:50], "context": "generate_mvp"})
-        error_msg = (
-            f"⚠️ Unexpected Error: {str(e)}\n\n"
-            f"Don't worry! Your request has been logged.\n"
-            f"Please try:\n"
-            f"1. Simplifying your idea description\n"
-            f"2. Waiting a moment and trying again\n"
-            f"3. Checking your internet connection\n\n"
-            f"If the problem persists, check the logs/ folder for details."
-        )
-        yield {
-            status_box: error_msg,
-            output_tabs: gr.Tabs(visible=False),
-            zip_file: gr.File(visible=False),
-            features_display: "",
-            architecture_display: "",
-            design_display: "",
-            user_flow_display: "",
-            roadmap_display: ""
-        }
-        return
 
 # Create Gradio interface
 with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as demo:
@@ -580,10 +472,9 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
     mcp_error_box = gr.Markdown(visible=False)
 
     gr.Markdown("""
-    # 🚀 MVP Agent
+    # MVP Agent
     ### AI-powered MVP Blueprint Generator
-    Transform your startup idea into a complete, actionable MVP specification in seconds (all results are structured for direct use by people and LLM-based agents).
-    """)
+    """, elem_classes="header-title")
     
     # Input section
     with gr.Row():
@@ -594,6 +485,27 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
                 lines=4,
                 elem_id="idea-input"
             )
+            
+            # Advanced Configuration
+            with gr.Accordion("🛠️ Advanced Configuration (Optional)", open=False):
+                with gr.Row():
+                    platform_input = gr.Dropdown(
+                        choices=["Web App", "Mobile App (iOS/Android)", "Cross-Platform", "Desktop", "CLI Tool", "API Service"],
+                        label="Target Platform",
+                        value="Web App",
+                        info="Where will your users interact with the product?"
+                    )
+                    tech_input = gr.Textbox(
+                        label="Preferred Tech Stack",
+                        placeholder="e.g. Next.js, Python/FastAPI, Flutter, No-Code...",
+                        info="Leave empty to let the AI decide"
+                    )
+                constraint_input = gr.Textbox(
+                    label="Key Constraints",
+                    placeholder="e.g. Must be Open Source, Max $50/mo hosting, HIPAA compliant...",
+                    info="Any specific limitations or requirements?"
+                )
+
             generate_btn = gr.Button(
                 "🎯 Generate MVP Blueprint",
                 variant="primary",
@@ -601,20 +513,17 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
             )
     
     # Status section
-    gr.Markdown("### 🤖 Agent Status")
-    status_box = gr.Textbox(
-        label="",
-        value="Ready to generate your MVP blueprint. Enter your idea above and click the button!",
-        lines=10,
-        max_lines=20,
-        interactive=False,
-        elem_id="status-box",
-        autoscroll=True
-    )
+    gr.Markdown("### 🤖 Agent Status - Mission Control")
+    with gr.Column():
+        with gr.Row():
+            current_phase_display = gr.Markdown("⚡ Current Phase: Idle", elem_classes="status-metric")
+            elapsed_time_display = gr.Markdown("⏱️ Elapsed Time: 0.0s", elem_classes="status-metric")
+            tokens_used_display = gr.Markdown("🧠 Tokens Used: 0", elem_classes="status-metric")
+        activity_log_display = gr.HTML("<div id='log-container'>Ready to generate your MVP blueprint. Enter your idea above and click the button!</div>", elem_id="activity-log-display")
     
     # Download button (initially hidden)
     zip_file = gr.File(
-        label="� Download All Files as ZIP",
+        label=" Download All Files as ZIP",
         visible=False,
         elem_id="download-zip"
     )
@@ -656,9 +565,12 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
     # Event handler - Production Mode
     generate_btn.click(
         fn=generate_mvp,
-        inputs=[idea_input],
+        inputs=[idea_input, tech_input, platform_input, constraint_input],
         outputs=[
-            status_box,
+            current_phase_display,
+            elapsed_time_display,
+            tokens_used_display,
+            activity_log_display,
             zip_file,
             output_tabs,
             overview_display,

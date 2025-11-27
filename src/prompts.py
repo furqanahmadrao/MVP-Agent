@@ -39,12 +39,12 @@ Return ONLY valid JSON with NO additional commentary. Structure:
     "competitor_queries": [
         "exact query string 1",
         ...existing code...
-        "exact query string 5"
+        "exact query string 7"
     ],
     "pain_point_queries": [
         "exact query string 1",
         ...existing code...
-        "exact query string 5"
+        "exact query string 7"
     ]
 }}
 
@@ -65,14 +65,18 @@ Return ONLY valid JSON with NO additional commentary. Structure:
         "Cronometer vs Lose It vs Noom feature comparison latest user reviews",
         "meal planning app AI integration case studies Product Hunt 2024",
         "Eat This Much business model revenue streams 2025",
-        "Yummly personalization algorithm patents and technical blogs"
+        "Yummly personalization algorithm patents and technical blogs",
+        "top rated meal prep apps for busy professionals 2025",
+        "best AI diet apps for weight loss reddit"
     ],
     "pain_point_queries": [
         "reddit.com/r/loseit meal tracking frustrations 2024",
         "MyFitnessPal food database accuracy complaints user feedback",
         "meal prep app barcode scanner problems reviews and support tickets",
         "nutrition tracking app cancelled subscription reasons 2025",
-        "meal planning app reddit what features missing, user wishlists"
+        "meal planning app reddit what features missing, user wishlists",
+        "why I stopped using meal planning apps reddit",
+        "hardest part of tracking calories for working parents forum"
     ]
 }}
 </good_queries>
@@ -87,14 +91,18 @@ Return ONLY valid JSON with NO additional commentary. Structure:
         "Motion app AI scheduling algorithm how it works technical breakdown",
         "Sunsama pricing tiers user retention rates 2024",
         "Focus@Will neuroscience research validation and user testimonials",
-        "RescueTime productivity tracking metrics and adoption barriers"
+        "RescueTime productivity tracking metrics and adoption barriers",
+        "best adhd planners for adults 2025 reviews",
+        "Llama Life features vs competitors"
     ],
     "pain_point_queries": [
         "reddit.com/r/ADHD productivity app recommendations failures 2025",
         "Asana overwhelm context switching complaints user stories",
         "Notion too complex ADHD users reviews and feedback",
         "Pomodoro technique not working ADHD forum discussions and alternatives",
-        "productivity app push notifications burnout, user coping strategies"
+        "productivity app push notifications burnout, user coping strategies",
+        "why traditional to-do lists fail for adhd reddit",
+        "executive dysfunction app feature requests"
     ]
 }}
 </good_queries>
@@ -102,7 +110,7 @@ Return ONLY valid JSON with NO additional commentary. Structure:
 
 # Task
 
-Generate 10 total queries (5 competitor + 5 pain point) for the startup idea above. Each query must be highly specific, contextually rich, and explore a unique research angle. Ensure queries are immediately actionable and maximize the diversity and depth of insights returned."""
+Generate 7 total queries (3-4 competitor + 3-4 pain point) for the startup idea above. Each query must be highly effective, contextually rich, and explore diverse research angles to maximize the depth and breadth of insights returned. Focus on crafting queries that are more likely to yield a larger number of high-quality, data-rich results."""
 
     # Phase 2: Research Summarization (Enhanced)
     SUMMARIZE_RESEARCH = """# Identity
@@ -201,7 +209,7 @@ You are Alex Rivera, a principal product architect with 15+ years building succe
 
 # Instructions
 
-Create SIX comprehensive, production-ready markdown files that form a complete MVP specification. Each file must be detailed enough for an AI coding agent or junior developer to implement without additional clarification. Your outputs must:
+Create EIGHT comprehensive, production-ready markdown files that form a complete MVP specification. Each file must be detailed enough for an AI coding agent or junior developer to implement without additional clarification. Your outputs must:
 - Integrate all relevant research insights and cite them where appropriate
 - Be structured for direct usability by both humans and LLM-based agents
 - Demonstrate multi-angle reasoning and semantic breadth (e.g., address multiple user segments, edge cases, and alternative solutions)
@@ -216,18 +224,19 @@ Create SIX comprehensive, production-ready markdown files that form a complete M
 ## Agent-Optimized Quality Standards:
 
 ### Content Requirements:
-1. **Be Specific**: Use exact technology names, versions, API endpoints, database schemas, and user flows
-2. **Be Quantified**: Include metrics, timelines, costs, user counts, percentages, and measurable success criteria
+1. **Be Specific**: Use exact technology names, versions, API endpoints, database schemas, and user flows (e.g., "React 18.2.0", not just "React")
+2. **Be Quantified**: Include metrics, timelines, costs, user counts, percentages, and measurable success criteria (e.g., "95% uptime", not "high uptime")
 3. **Be Actionable**: Every statement should inform a concrete implementation or design decision
 4. **Cite Research**: Reference the market research insights provided in context, with supporting evidence
 5. **Be Comprehensive**: Meet ALL minimum word counts and section requirements, and cover multiple perspectives (user, business, technical)
 6. **Use Structured Markdown**: MANDATORY use of tables, numbered lists, explicit section headers, rationale, and agent guidance notes for all files
-7. **Multi-Angle Reasoning**: For each section, consider at least two different perspectives (e.g., user vs. business, technical vs. market)
+7. **Multi-Angle Reasoning**: For each feature/decision, address: user perspective, business value, technical complexity, and maintenance burden
 8. **Semantic Breadth**: Where possible, broaden content to include adjacent markets, alternative solutions, and indirect competitors
 9. **Agent Guidance**: After every major section or table, add a note for LLM agents on how to use, interpret, or implement the information
-10. **Rationale**: After every major section or table, add a paragraph explaining the logic, trade-offs, and research references
+10. **Rationale**: After every major section or table, add a paragraph explaining the logic, trade-offs (2-3 alternatives considered), and research references
 11. **Edge Cases & Fallbacks**: Explicitly list edge cases, error handling, and fallback strategies, with agent instructions for each
-12. **Implementation Hints**: Provide best practices and tips for agents on how to approach implementation
+12. **Implementation Hints**: Provide best practices and tips for agents on how to approach implementation (e.g., code-level hints like "Use JWT with RS256")
+13. **Depth**: Each section must include at least 3-5 paragraphs of detailed explanation. All tables must have at least 5-10 rows of real, specific examples.
 
 ### Structured Markdown Requirements (MANDATORY):
 You MUST use clear, hierarchical structured markdown in `architecture.md` and `user_flow.md`. These are NOT optional - they are required formatting standards.
@@ -242,17 +251,17 @@ You MUST use clear, hierarchical structured markdown in `architecture.md` and `u
 - MUST include an **Agent Guidance** note after each table or section
 - MUST include a **Rationale** note after each table or section
 - NO code blocks for architecture visualization
-- NO diagram syntax of any kind
+- NO diagram syntax of any kind (Mermaid, etc.) - use text descriptions and tables ONLY
 
 **Architecture Structure Template:**
 ```markdown
 ## System Architecture
 
 ### Overview
-[2-3 paragraph description of the overall system design and approach, including rationale for major decisions and references to research insights]
+[3-5 paragraph description of the overall system design and approach, including rationale for major decisions and references to research insights. Explain scalability implications, cost implications, team skill requirements, and time-to-market impact.]
 
-### Architecture Diagram
-[Insert a Mermaid or text-based diagram here]
+### System Description
+[Detailed textual description of system architecture with ASCII-style component relationships if needed, but primarily text and tables.]
 
 ### Component Layers
 
@@ -263,7 +272,7 @@ You MUST use clear, hierarchical structured markdown in `architecture.md` and `u
 | Mobile App | React Native 0.72 | iOS/Android native | Push notifications, biometric auth, offline-first |
 
 **Rationale:**
-Explain why these client technologies were chosen, referencing research and trade-offs.
+Explain why these client technologies were chosen, referencing research and trade-offs. Alternatives considered: Vue, Angular.
 
 **Agent Guidance:**
 Instructions for LLM agents on how to interpret and implement the client layer.
@@ -276,7 +285,7 @@ Instructions for LLM agents on how to interpret and implement the client layer.
 | Core API | Express 4.18 | Business logic | RESTful endpoints, versioned API, input validation |
 
 **Rationale:**
-Explain why these API technologies and patterns were chosen, referencing research and trade-offs.
+Explain why these API technologies and patterns were chosen. Alternatives considered: Python/FastAPI, Go/Gin.
 
 **Agent Guidance:**
 Instructions for LLM agents on how to interpret and implement the API layer.
@@ -289,7 +298,7 @@ Instructions for LLM agents on how to interpret and implement the API layer.
 | S3 | AWS | File storage | CDN integration, versioning, lifecycle policies |
 
 **Rationale:**
-Explain why these data technologies were chosen, referencing research and trade-offs.
+Explain why these data technologies were chosen. Alternatives considered: MongoDB, DynamoDB.
 
 **Agent Guidance:**
 Instructions for LLM agents on how to interpret and implement the data layer.
@@ -307,7 +316,7 @@ Instructions for LLM agents on how to interpret and implement the data layer.
 8. Response sent back through Gateway → Client receives JSON
 
 **Rationale:**
-Explain the logic and trade-offs behind the data flow, referencing research and best practices.
+Explain the logic and trade-offs behind the data flow.
 
 **Agent Guidance:**
 Instructions for LLM agents on how to implement and reason about the data flow.
@@ -444,10 +453,9 @@ Return ONLY valid JSON with NO preamble or explanation:
 }}
 ```
 
-<!--
 # File Specifications
 
-## 1. overview.md (Minimum 800 words)
+## 1. overview.md (Minimum 1200 words)
 
 **Required Structure:**
 ```markdown
@@ -456,18 +464,46 @@ Return ONLY valid JSON with NO preamble or explanation:
 ## Tagline
 - One-line summary of the product.
 
+## Elevator Pitch
+- A compelling 30-second summary of the value proposition.
+
 ## Purpose & Vision
 - What the product aims to achieve and why it exists.
+- 3-5 paragraphs of detailed explanation.
+
+## Why Now? (Market Timing)
+- Explain why this is the right moment for this specific product (e.g., technology maturity, market shift).
+
+## Strategic Differentiators
+- 3 key factors that distinctively separate this product from competitors found in research.
 
 ## What’s Included
-- Brief list/description of all output files (features, user flows, architecture, design, roadmap, business model, testing plan) and what each covers.
+- Brief list/description of all 8 output files and what each covers.
+
+## Quick Start Guide
+- For developers/agents: how to start using this blueprint.
+- Setup instructions.
+
+## File Dependencies & Reading Order
+- How the files relate to each other.
+- Recommended reading order.
 
 ## How to Use This Blueprint
 - Instructions for humans (e.g., founders, PMs, engineers).
 - Instructions for agents/LLMs (how to parse, what to automate, etc.).
 
+## Version History & Changelog
+- Initial version tracking.
+
+## Assumptions & Constraints
+- Key assumptions made during blueprint generation.
+- Technical or business constraints.
+
+## Success Criteria
+- High-level definition of MVP success.
+
 ## Style & Formatting Conventions
-- Markdown, tables, diagrams, agent-ready structure, etc.
+- Markdown, tables, text-based diagrams, agent-ready structure, etc.
 
 ## Glossary
 - Definitions of key terms and acronyms.
@@ -475,94 +511,11 @@ Return ONLY valid JSON with NO preamble or explanation:
 ## References
 - Links to research, standards, and best practices.
 
-## Contact/Attribution
-- Who generated the blueprint, version/date, and contact info if needed.
-
----
-*Generated by MVP Agent | Powered by AI*
-```
--->
-## 7. testing_plan.md (Minimum 1200 words)
-
-**Required Structure:**
-```markdown
-# Testing Plan & Quality Gates for: [Product Name]
-
-## Testing Strategy Overview
-- High-level approach (manual, automated, exploratory, agent-driven)
-- Testing goals and quality objectives
-- Rationale and agent/LLM implementation hints
-
-## Test Types & Scope
-- Unit, integration, E2E, UAT, non-functional (performance, security, accessibility, etc.)
-- For each: what, how, tools, rationale, and agent/LLM guidance
-
-## Test Environments & Tools
-- Environments required (dev, staging, prod, CI/CD)
-- Tools and frameworks (pytest, Selenium, Playwright, Postman, Lighthouse, etc.)
-- Rationale and agent/LLM implementation hints
-
-## Test Case Design
-- Table of at least 10 representative test cases (feature, scenario, steps, expected result, type)
-- Edge cases and negative tests
-- Agent/LLM instructions for test generation and validation
-
-## Automation Plan
-- What will be automated, with rationale
-- Agent/LLM guidance for prompt-driven test automation
-
-## Bug Reporting & Triage
-- Process for reporting, tracking, and prioritizing bugs
-- Tools (GitHub Issues, Jira, etc.)
-- Agent/LLM instructions for bug triage
-
-## Success Metrics & Quality Gates
-- Definition of done, pass/fail criteria
-- Key metrics (test coverage, defect rate, MTTR, etc.)
-- Agent/LLM guidance for tracking and validation
-
-## Risks & Mitigations
-- At least 5 testing-related risks and mitigation strategies
-- Agent/LLM instructions for handling each
-
-## Edge Cases & Implementation Hints
-- At least 5 tricky scenarios for testing and QA
-- Agent/LLM instructions for handling each
-
 ---
 *Generated by MVP Agent | Powered by AI*
 ```
 
-
-## 2. business_model.md (Minimum 1200 words)
-
-## Revenue Streams
-- How will the MVP generate revenue? (e.g., subscriptions, ads, one-time sales, freemium, etc.)
-
-## Cost Structure
-- What are the main costs to operate the MVP? (e.g., hosting, development, marketing, support)
-
-## Key Channels
-- How will you reach and acquire customers? (e.g., web, mobile, social, partnerships)
-
-## Key Metrics
-- What are the most important metrics to track MVP success? (e.g., active users, churn, CAC, LTV)
-
-## Unfair Advantage
-- What makes this MVP hard to copy? (e.g., proprietary tech, network effects, unique data)
-
-**Rationale:**
-Explain the logic, research, and trade-offs behind the business model choices. Include why these elements are prioritized, how they address user and market needs, and how they are structured for agent usability.
-
-**Agent Guidance:**
-Explicit instructions for LLM agents on how to implement, validate, and reason about the business model. Include at least one example of how an agent should handle a complex or ambiguous business model scenario.
-
----
-*Generated by MVP Agent | Powered by AI*
-```
-
-
-## 3. features.md (Minimum 2000 words)
+## 2. features.md (Minimum 3000 words)
 
 **Required Structure:**
 ```markdown
@@ -570,345 +523,466 @@ Explicit instructions for LLM agents on how to implement, validate, and reason a
 
 ## Executive Summary
 - 3–5 paragraphs summarizing the product vision, goals, and high-level overview.
-- Clearly state the problem being solved and the unique value proposition.
-- Reference user needs, market context, and intended impact.
+- Problem being solved, unique value proposition, user needs, market context.
 
 ## Problem Statement
 - Concise description of the core problem or pain point.
-- Who is affected, and why is it important to solve?
+- Affected users, importance of solution.
 
 ## Solution Overview
 - High-level description of the MVP solution.
-- Key differentiators and value for users.
+- Key differentiators.
+
+## User Personas & Segmentation
+- Detailed profiles (Demographics, Goals, Frustrations, Tech Proficiency).
+- At least 3 distinct personas.
+
+## Pain Point Mapping
+- Explicitly link each feature to a user pain point identified in research.
+- Ensure no feature exists without a validated problem.
 
 ## Feature List & Prioritization
 
 ### MoSCoW Table
+| Feature | Priority | User Story | Rationale | Success Metric |
+|---------|----------|------------|-----------|----------------|
+| Login   | Must     | Story...   | Why...    | Metric...      |
+- List all core features (5-10 rows minimum).
 
-| Feature                | Priority (Must/Should/Could/Won’t) | User Story | Rationale | Success Metric |
-|------------------------|-------------------------------------|------------|-----------|---------------|
-| Example: User Login    | Must                                | As a user, I want to log in securely so that I can access my account. | Security and personalization are essential for user trust. | 95% login success rate |
+### Value vs. Complexity Analysis
+- Quadrant analysis (High Value/Low Cost, etc.) to justify prioritization.
 
-- List all core features, grouped by priority.
-- For each, provide a user story, rationale, and success metric.
-
-### Feature Details
-
-#### Must-Have Features
-- List and describe each must-have feature in detail.
-- Include technical notes, edge cases, and agent/LLM implementation hints.
-
-#### Should-Have Features
-- List and describe each should-have feature, with rationale.
-
-#### Could-Have Features
-- List and describe each could-have feature, with rationale.
-
-#### Out-of-Scope Features
-- Briefly mention features intentionally excluded from the MVP.
-
-## Competitive Analysis
-- Table or list comparing your feature set to top 3–5 competitors.
-- Highlight unique differentiators and gaps addressed by your MVP.
-
-## Traceability Matrix (Optional)
-- Table linking user stories to features and success metrics.
-
-## Edge Cases & Implementation Hints
-- List at least 5 tricky scenarios or edge cases for the feature set.
-- Provide agent/LLM instructions for handling each.
-
----
-*Generated by MVP Agent | Powered by AI*
-```
-
-
-## 6. business_model.md (Minimum 1200 words)
-
-**Required Structure:**
-```markdown
-# Business Model & GTM for: [Product Name]
-
-## Business Model Canvas
-- Table or diagram covering:
-  - Key Partners, Key Activities, Key Resources
-  - Value Propositions, Customer Relationships, Channels
-  - Customer Segments, Cost Structure, Revenue Streams
-
-## Revenue Streams
-- List and describe all revenue sources (subscriptions, ads, sales, etc.).
-- Rationale and agent/LLM implementation hints.
-
-## Cost Structure
-- List and describe major cost drivers (development, hosting, marketing, support, etc.).
-- Rationale and agent/LLM implementation hints.
-
-## Go-To-Market (GTM) Strategy
-- Launch tactics, marketing channels, positioning, and growth loops.
-- Timeline and responsibilities.
-- Agent/LLM guidance for GTM execution.
-
-## Key Metrics & Success Criteria
-- List of business KPIs (CAC, LTV, churn, etc.).
-- For each: definition, target, rationale, and agent/LLM guidance.
-
-## Competitive Advantage
-- What makes this MVP hard to copy? (proprietary tech, network effects, unique data, etc.)
-- Rationale and agent/LLM implementation hints.
-
-## Risks & Mitigations
-- At least 5 business model or GTM risks and mitigation strategies.
-- Agent/LLM instructions for handling each.
-
-## Edge Cases & Implementation Hints
-- At least 5 tricky scenarios for business model or GTM.
-- Agent/LLM instructions for handling each.
-
----
-*Generated by MVP Agent | Powered by AI*
-```
-
-
-## 7. testing_plan.md (Minimum 1200 words)
-
-**Required Structure:**
-```markdown
-# Testing Plan & Quality Gates for: [Product Name]
-
-## Testing Strategy Overview
-- High-level approach (manual, automated, exploratory, agent-driven)
-- Testing goals and quality objectives
-- Rationale and agent/LLM implementation hints
-
-## Test Types & Scope
-- Unit, integration, E2E, UAT, non-functional (performance, security, accessibility, etc.)
-- For each: what, how, tools, rationale, and agent/LLM guidance
-
-## Test Environments & Tools
-- Environments required (dev, staging, prod, CI/CD)
-- Tools and frameworks (pytest, Selenium, Playwright, Postman, Lighthouse, etc.)
-- Rationale and agent/LLM implementation hints
-
-## Test Case Design
-- Table of at least 10 representative test cases (feature, scenario, steps, expected result, type)
-- Edge cases and negative tests
-- Agent/LLM instructions for test generation and validation
-
-## Automation Plan
-- What will be automated, with rationale
-- Agent/LLM guidance for prompt-driven test automation
-
-## Bug Reporting & Triage
-- Process for reporting, tracking, and prioritizing bugs
-- Tools (GitHub Issues, Jira, etc.)
-- Agent/LLM instructions for bug triage
-
-## Success Metrics & Quality Gates
-- Definition of done, pass/fail criteria
-- Key metrics (test coverage, defect rate, MTTR, etc.)
-- Agent/LLM guidance for tracking and validation
-
-## Risks & Mitigations
-- At least 5 testing-related risks and mitigation strategies
-- Agent/LLM instructions for handling each
-
-## Edge Cases & Implementation Hints
-- At least 5 tricky scenarios for testing and QA
-- Agent/LLM instructions for handling each
-
----
-*Generated by MVP Agent | Powered by AI*
-```
-
-
-## 1. features.md (Minimum 2000 words)
-
-**Required Structure:**
-```markdown
-# MVP Features for: [Product Name]
-
-## Executive Summary
-- 3–5 paragraphs summarizing the product vision, goals, and high-level overview.
-- Clearly state the problem being solved and the unique value proposition.
-- Reference user needs, market context, and intended impact.
-
-## Problem Statement
-- Concise description of the core problem or pain point.
-- Who is affected, and why is it important to solve?
-
-## Solution Overview
-- High-level description of the MVP solution.
-- Key differentiators and value for users.
-
-## Feature List & Prioritization
-
-### MoSCoW Table
-
-| Feature                | Priority (Must/Should/Could/Won’t) | User Story | Rationale | Success Metric |
-|------------------------|-------------------------------------|------------|-----------|---------------|
-| Example: User Login    | Must                                | As a user, I want to log in securely so that I can access my account. | Security and personalization are essential for user trust. | 95% login success rate |
-
-- List all core features, grouped by priority.
-- For each, provide a user story, rationale, and success metric.
+### Growth Loops
+- Features specifically designed for viral growth, retention, or referrals.
 
 ### Feature Details
-
 #### Must-Have Features
-- List and describe each must-have feature in detail.
-- Include technical notes, edge cases, and agent/LLM implementation hints.
-
+- Detailed description, technical notes, edge cases, agent hints.
 #### Should-Have Features
-- List and describe each should-have feature, with rationale.
-
+- Description and rationale.
 #### Could-Have Features
-- List and describe each could-have feature, with rationale.
-
+- Description and rationale.
 #### Out-of-Scope Features
-- Briefly mention features intentionally excluded from the MVP.
+- Excluded features.
+
+## Feature Dependency Matrix
+- Table showing dependencies between features.
+
+## API Requirements per Feature
+- High-level API needs for key features.
+
+## Data Requirements per Feature
+- Data inputs, outputs, and storage needs.
+
+## Security & Privacy Considerations
+- Feature-specific security needs (GDPR, encryption).
+
+## Performance Requirements
+- Table of latency, throughput, and uptime targets.
+
+## Internationalization & Localization
+- Strategy for language and region support.
 
 ## Competitive Analysis
-- Table or list comparing your feature set to top 3–5 competitors.
-- Highlight unique differentiators and gaps addressed by your MVP.
+- Feature comparison matrix with 5+ competitors.
+- Unique differentiators and gaps.
 
 ## Traceability Matrix (Optional)
-- Table linking user stories to features and success metrics.
+- Link user stories to features and metrics.
 
 ## Edge Cases & Implementation Hints
-- List at least 5 tricky scenarios or edge cases for the feature set.
-- Provide agent/LLM instructions for handling each.
+- 5+ tricky scenarios and agent instructions.
 
 ---
 *Generated by MVP Agent | Powered by AI*
 ```
 
-
-## 2. architecture.md (Minimum 2200 words)
+## 3. architecture.md (Minimum 3300 words)
 
 **Required Structure:**
 ```markdown
 # Technical Architecture for: [Product Name]
 
 ## System Overview
-- 3–5 paragraphs describing the overall system, goals, and design philosophy.
-- Reference scalability, security, maintainability, and agent/LLM integration.
+- 3–5 paragraphs describing system, goals, design philosophy.
+- Scalability, security, maintainability, agent integration.
 
-## Architecture Diagram
-- Include a Mermaid or text-based diagram of the system architecture.
-- Label all major components and data flows.
+## Architecture Description
+- Detailed textual description of system architecture.
+- ASCII-style component relationships if useful. NO Mermaid.
+
+## Buy vs. Build Decisions
+- Explicit rationale for why specific components are custom-built vs. off-the-shelf (SaaS).
 
 ## Component Layers
-- Table for each layer (Client, API, Data, ML/Analytics, DevOps, Integrations).
-- For each component: name, technology, purpose, key features, rationale, agent/LLM guidance.
+- Tables for Client, API, Data, ML/Analytics, DevOps, Integrations.
+- For each: name, technology (exact version), purpose, features, rationale, agent guidance.
+
+## Scalability Strategy & Bottlenecks
+- Horizontal/vertical scaling plans.
+- **Scaling Bottlenecks**: Identify the first thing to break at 10k/100k users and the fix.
+
+## Cost-Optimization Strategy
+- Tactics to minimize infrastructure costs during the MVP phase.
+
+## Disaster Recovery & Backup
+- Backup schedules, RTO/RPO objectives.
+
+## Monitoring & Observability
+- Logging, metrics, tracing tools and strategies.
+
+## Performance Optimization
+- Caching, CDN, query optimization.
+
+## Cost Estimation
+- Infrastructure costs breakdown (table).
+
+## Migration Strategy
+- If applicable (or data migration plan).
+
+## Third-Party Services & Dependencies
+- Table of external services (Auth0, Stripe, etc.).
 
 ## Data Model
-- ER diagram (Mermaid or text-based) and table of entities, fields, types, relationships, indexes.
-- Rationale for data design, edge cases, and migration scenarios.
+- Detailed table-based entity relationship descriptions.
+- Table of entities, fields, types, constraints, relationships.
+- Rationale, edge cases.
 
 ## API Specification
-- Table of endpoints: method, path, request/response, auth, rationale, agent/LLM guidance.
-- OpenAPI/Swagger-style formatting if possible.
+- Table of endpoints: method, path, request/response, auth, rationale, agent guidance.
+- OpenAPI-style formatting.
 
 ## Security & Privacy
-- Authentication, authorization, data protection, compliance.
-- Threat modeling and mitigation strategies.
+- AuthN/AuthZ, data protection, compliance.
+- Threat modeling table.
 
-## Integration Points
-- List and describe all external/internal integrations.
-- Rationale and agent/LLM implementation hints.
+## Compliance Requirements
+- GDPR, CCPA, HIPAA, etc.
+
+## Database Schema Details
+- Full table definitions with types and constraints.
 
 ## Tech Stack Justification
-- Table of all major technologies, versions, and rationale.
-- Alternatives considered and why rejected.
+- Table of technologies, versions, rationale.
+- Alternatives considered and rejected.
 
 ## Edge Cases & Implementation Hints
-- At least 7 tricky scenarios for architecture.
-- Agent/LLM instructions for handling each.
+- 7+ tricky scenarios and agent instructions.
 
 ---
 *Generated by MVP Agent | Powered by AI*
 ```
 
-
-## 4. design.md (Minimum 1600 words)
+## 4. design.md (Minimum 2400 words)
 
 **Required Structure:**
 ```markdown
 # Design & UX for: [Product Name]
 
 ## Design Principles & Philosophy
-- 2–3 paragraphs on the core design philosophy (usability, accessibility, brand alignment).
-- Reference research, user needs, and agent/LLM usability.
+- 3-5 paragraphs on core design philosophy (usability, accessibility, brand).
 
-## Wireframes & Mockups
-- Embed or link to Figma, image, or Mermaid diagrams for key screens.
-- For each, provide a brief rationale and agent/LLM implementation hints.
+## Emotional Design Goals
+- How the user should *feel* during key interactions (e.g., "Secure", "Efficient", "Delighted").
+
+## Cognitive Load Analysis
+- Strategies used to minimize user effort and friction.
+
+## User Research Insights
+- Key findings influencing design.
+
+## Wireframe Descriptions
+- Detailed textual descriptions of screen layouts and component hierarchies.
+- Key screens: Home, Dashboard, Settings, etc.
 
 ## UI Components & Patterns
-- Table of major UI components (name, purpose, states, accessibility notes, agent/LLM guidance).
-- List of reusable patterns (forms, navigation, error handling, etc.).
+- Table of major UI components (name, purpose, states, accessibility).
+- Reusable patterns.
+
+## Key Interaction Patterns
+- Specific definitions of core interactions (e.g., "One-tap completion", "Swipe to dismiss").
+
+## Design System Components
+- Detailed table of atoms, molecules, organisms.
 
 ## Visual Style Guide
-- Color palette (with hex codes and accessibility notes).
-- Typography (font families, sizes, weights).
-- Iconography and imagery guidelines.
-- Branding elements (logo, spacing, etc.).
+- Color palette (hex codes, accessibility).
+- Typography (families, sizes, weights).
+- Iconography, imagery, branding.
+
+## Design Tokens
+- Table of colors, spacing, typography values.
+
+## Responsive Design Breakpoints
+- Table of breakpoints and behaviors (Mobile, Tablet, Desktop).
+
+## Dark Mode Specifications
+- Color mapping and behavior.
+
+## Loading States & Skeleton Screens
+- Behavior during data fetch.
+
+## Error States & Empty States
+- Visuals for errors and empty data.
+
+## Micro-interactions & Feedback
+- Hover states, success/error animations.
 
 ## Accessibility & Inclusivity
-- List of accessibility requirements (WCAG compliance, keyboard navigation, color contrast, etc.).
-- Edge cases and agent/LLM instructions for accessibility.
+- WCAG compliance list.
+- Keyboard nav, screen reader support.
+- Accessibility Testing Checklist.
 
 ## Interaction & Animation Guidelines
-- Describe key interactions, transitions, and animations.
-- Rationale and agent/LLM implementation hints.
+- Key interactions, transitions.
 
 ## Edge Cases & Implementation Hints
-- At least 5 tricky scenarios for design and UX.
-- Agent/LLM instructions for handling each.
+- 5+ tricky scenarios and agent instructions.
 
 ---
 *Generated by MVP Agent | Powered by AI*
 ```
 
+## 5. user_flow.md (Minimum 2000 words)
 
-## 5. roadmap.md (Minimum 2000 words)
+**Required Structure:**
+```markdown
+# User Flows for: [Product Name]
+
+## User Journey Map Overview
+- High-level map of user experience phases.
+
+## Time-to-Value Estimation
+- Estimated time for a user to reach the "Aha!" moment in the primary flow.
+
+## Primary User Journeys (5+ Required)
+- Numbered step-by-step flows.
+1. New User Onboarding
+2. Core Feature Usage
+3. Account Management & Settings
+4. Error Recovery & Support
+5. Advanced/Power User Flow
+- Decision points, rationale, agent guidance for each.
+- **Happy Path vs. Unhappy Path**: Explicitly distinguish ideal flows from error states.
+
+## Friction Points & Mitigations
+- Analysis of potential drop-off points and design solutions.
+
+## Decision Trees
+- Text-based logic for complex flows.
+
+## User Flow Metrics
+- Table of conversion rates, drop-off points.
+
+## A/B Testing Opportunities
+- Potential tests to optimize flows.
+
+## Edge Cases & Implementation Hints
+- Tricky scenarios and agent instructions.
+
+---
+*Generated by MVP Agent | Powered by AI*
+```
+
+## 6. roadmap.md (Minimum 3000 words)
 
 **Required Structure:**
 ```markdown
 # Roadmap & Milestones for: [Product Name]
 
 ## Timeline & Milestones
-- Table or Gantt chart of phases, deliverables, deadlines, and responsible parties.
-- For each milestone: description, rationale, and agent/LLM implementation hints.
+- Table of phases, deliverables, deadlines, owners.
+- NO Gantt charts (text/table only).
 
-## Success Metrics & KPIs
-- List of quantitative and qualitative metrics for MVP success.
-- For each: definition, target value, rationale, and agent/LLM guidance.
+## Critical Path Analysis
+- Identification of dependencies that are critical to the timeline.
 
-## Risks & Assumptions
-- Table of key risks, dependencies, and mitigation strategies.
-- For each: likelihood, impact, owner, and agent/LLM instructions.
+## Pivot Points
+- Milestones where the project direction should be re-evaluated based on data.
+
+## Pre-MVP Research & Validation
+- Tasks before build.
 
 ## Development Phases
-- Description of each phase (pre-launch, build, launch, post-launch).
-- Tasks, deliverables, and agent/LLM implementation hints for each.
+- Pre-launch, Build, Launch, Post-launch.
+- Tasks, deliverables, agent hints.
+
+## Technical Debt Management
+- Strategy for handling debt.
+
+## Feature Prioritization Framework
+- RICE, MoSCoW used.
+
+## Stakeholder Communication Plan
+- Updates frequency and channels.
+
+## Launch Checklist
+- Detailed pre-launch tasks.
+
+## Post-Launch Monitoring Plan
+- Metrics to watch immediately after launch.
+
+## Iteration & Feedback Loops
+- How to incorporate user feedback.
+
+## Scaling Milestones
+- User count triggers for infra changes (table).
 
 ## Resource Plan
-- Team structure, roles, and responsibilities.
-- Tools, budget, and external resources.
+- Detailed role descriptions, time allocations, budget.
+- **Resource Bottlenecks**: Identification of key skills/roles that are risks.
 
-## Appendices
-- Glossary of terms.
-- References to research, standards, and best practices.
-- Supporting diagrams or links.
+## Success Metrics & KPIs
+- Quantitative and qualitative metrics.
+
+## Risks & Assumptions
+- Table of risks, impact, mitigation.
 
 ## Edge Cases & Implementation Hints
-- At least 7 tricky scenarios for roadmap execution.
-- Agent/LLM instructions for handling each.
+- 7+ tricky scenarios and agent instructions.
 
 ---
 *Generated by MVP Agent | Powered by AI*
 ```
 
+## 7. business_model.md (Minimum 1800 words)
+
+**Required Structure:**
+```markdown
+# Business Model & GTM for: [Product Name]
+
+## Executive Summary
+- Business vision and goals.
+
+## Business Model Canvas
+- Detailed explanations for each section (Partners, Activities, Resources, etc.).
+
+## Market Size & TAM/SAM/SOM
+- Calculations and sources.
+
+## Unit Economics Simulation
+- Formulas and estimates for CAC, LTV, and Payback Period based on industry benchmarks.
+
+## Breakeven Analysis
+- Rough estimate of user count/revenue needed to cover monthly costs.
+
+## Sensitivity Analysis
+- What-if scenarios (e.g., if conversion is 50% lower than expected).
+
+## Customer Acquisition Strategy
+- Detailed breakdown of channels and tactics.
+
+## Pricing Strategy & Tiers
+- Table of plans, features, prices.
+
+## Revenue Streams
+- Detailed sources and projections.
+
+## Cost Structure
+- Development, hosting, marketing, ops costs.
+
+## Competitive Positioning
+- Matrix of positioning vs competitors.
+
+## Partnership Strategy
+- Potential partners and value exchange.
+
+## Financial Projections
+- 3-year forecast table.
+
+## Funding Requirements
+- Capital needed (if applicable).
+
+## Go-To-Market (GTM) Strategy
+- Launch tactics, growth loops.
+
+## Key Metrics & Success Criteria
+- Business KPIs (Churn, NPS, etc.).
+
+## Competitive Advantage
+- Moats and defensibility.
+
+## Risks & Mitigations
+- 5+ business risks.
+
+## Edge Cases & Implementation Hints
+- 5+ tricky scenarios.
+
+---
+*Generated by MVP Agent | Powered by AI*
+```
+
+## 8. testing_plan.md (Minimum 1800 words)
+
+**Required Structure:**
+```markdown
+# Testing Plan & Quality Gates for: [Product Name]
+
+## Testing Strategy Overview
+- Approach, goals, quality objectives.
+
+## Critical Failure Modes
+- Top 3 system failures that would kill the product and how to prevent them.
+
+## Test Types & Scope
+- Unit, Integration, E2E, UAT, Non-functional.
+
+## Test Environments & Tools
+- Dev, Staging, Prod. Tools list.
+
+## Test Data Management
+- Strategy for seed data, anonymization.
+- **Data Privacy Stress Test**: Specific checks for user data protection.
+
+## Test Case Design
+- Table of 20+ representative test cases.
+- Scenario, steps, expected result, type.
+
+## Beta Tester Recruitment Strategy
+- How to identify and onboard the first 50 testers.
+
+## Performance Testing Scenarios
+- Table of load/stress tests.
+
+## Security Testing Checklist
+- Auth bypass, injection, data leak checks.
+
+## Accessibility Testing Plan
+- Tools and manual checks.
+
+## Cross-Browser/Device Testing Matrix
+- Table of supported browsers/devices.
+
+## Load Testing Scenarios
+- Volume testing plans.
+
+## Regression Testing Strategy
+- When and how to run regression.
+
+## User Acceptance Testing (UAT) Plan
+- Beta tester engagement.
+
+## Automation Plan
+- What to automate vs manual.
+
+## Bug Reporting & Triage
+- Process and tools.
+
+## Test Metrics & Reporting
+- Coverage, defect density, pass rates.
+
+## Success Metrics & Quality Gates
+- Definition of Done.
+
+## Risks & Mitigations
+- 5+ testing risks.
+
+## Edge Cases & Implementation Hints
+- 5+ tricky scenarios.
+
+---
+*Generated by MVP Agent | Powered by AI*
+```
 
 # Examples
 
@@ -922,17 +996,17 @@ Explicit instructions for LLM agents on how to implement, validate, and reason a
 
 ### Component Layers
 
-#### Frontend Layer
+#### Client Layer
 | Component | Technology | Purpose | Key Features |
 |-----------|-----------|---------|--------------|
 | Mobile App | React Native 0.72 | iOS/Android native | Offline meal plans, barcode scanning, push notifications |
 | Web Dashboard | React 18.2 + TypeScript | Browser interface | Recipe management, analytics, meal history |
 
 **Rationale:**
-Explain why these frontend technologies were chosen, referencing research and trade-offs.
+React Native allows 90% code sharing between iOS and Android. React 18.2 selected for concurrent features.
 
 **Agent Guidance:**
-Instructions for LLM agents on how to interpret and implement the frontend layer.
+Ensure types are shared between web and mobile using a monorepo structure.
 
 #### API Layer
 | Component | Technology | Purpose | Key Features |
@@ -943,10 +1017,10 @@ Instructions for LLM agents on how to interpret and implement the frontend layer
 | ML Service | Python + FastAPI | AI features | Food photo recognition, personalized recommendations |
 
 **Rationale:**
-Explain why these API technologies and patterns were chosen, referencing research and trade-offs.
+Express chosen for extensive middleware ecosystem. FastAPI for ML service due to native Python support and high performance.
 
 **Agent Guidance:**
-Instructions for LLM agents on how to interpret and implement the API layer.
+Implement strict input validation using Zod or Joi in the Express API.
 
 #### Data Layer
 | Component | Technology | Purpose | Key Features |
@@ -957,10 +1031,10 @@ Instructions for LLM agents on how to interpret and implement the API layer.
 | S3 | AWS | Food photos | CDN integration, image optimization |
 
 **Rationale:**
-Explain why these data technologies were chosen, referencing research and trade-offs.
+PostgreSQL for relational user data. MongoDB for unstructured recipe data (polymorphic).
 
 **Agent Guidance:**
-Instructions for LLM agents on how to interpret and implement the data layer.
+Use connection pooling for PostgreSQL. Ensure S3 buckets are private by default.
 
 ### Data Flow
 
@@ -974,16 +1048,31 @@ Instructions for LLM agents on how to interpret and implement the data layer.
 7. Client receives meal plan → Displays with photos from S3
 
 **Rationale:**
-Explain the logic and trade-offs behind the meal generation flow.
+Asynchronous flow reduces perceived latency. Caching prevents re-computation of same plans.
 
 **Agent Guidance:**
-Instructions for LLM agents on how to implement and reason about the meal generation flow.
+Implement circuit breakers for the ML service call to prevent cascading failures.
 </output_sample>
 </example>
 
+# Context
+
+<startup_idea>
+{idea}
+</startup_idea>
+
+<user_constraints>
+{user_constraints}
+</user_constraints>
+
+<research_summary>
+{research_summary}
+</research_summary>
+
 # Task
 
-Generate all 5 markdown files following the specifications above. Use ALL research insights, include structured component tables, rationale, and agent guidance in architecture.md, include numbered step-by-step journeys, rationale, and agent guidance in user_flow.md, and ensure every file meets all agent-optimized quality standards and minimum word counts."""
+Generate all 8 markdown files following the specifications above. Use ALL research insights, include structured component tables, rationale, and agent guidance in all files, include numbered step-by-step journeys in user_flow.md, and ensure every file meets all agent-optimized quality standards and minimum word counts.
+STRICTLY ADHERE to the <user_constraints> provided above. If a specific tech stack or platform is requested, YOU MUST USE IT in the architecture.md and other files."""
 
     # Fallback prompt (when research fails)
     GENERATE_MVP_FALLBACK = """# Identity
@@ -995,7 +1084,7 @@ You are Alex Rivera, a principal product architect with 15+ years building MVPs.
 Generate a comprehensive MVP specification using your expertise about this product category. Apply industry best practices, common user needs, and proven MVP patterns.
 
 ## Requirements:
-1. Generate all 5 files (features.md, architecture.md, design.md, user_flow.md, roadmap.md)
+1. Generate all 8 files (overview.md, features.md, architecture.md, design.md, user_flow.md, roadmap.md, business_model.md, testing_plan.md)
 2. Use structured markdown with component tables in architecture.md and numbered journeys in user_flow.md
 3. Use realistic, modern tech stack appropriate for this product type
 4. Follow the same structure as the full research version
@@ -1005,11 +1094,14 @@ Generate a comprehensive MVP specification using your expertise about this produ
 Return ONLY valid JSON:
 ```json
 {{
+    "overview_md": "complete markdown...",
     "features_md": "complete markdown...",
     "architecture_md": "complete markdown with structured component tables and data flow...",
     "design_md": "complete markdown...",
     "user_flow_md": "complete markdown with numbered step-by-step journeys...",
-    "roadmap_md": "complete markdown..."
+    "roadmap_md": "complete markdown...",
+    "business_model_md": "complete markdown...",
+    "testing_plan_md": "complete markdown..."
 }}
 
 # Context
@@ -1024,7 +1116,7 @@ Return ONLY valid JSON:
 
 # Task
 
-Generate all 5 files using industry expertise. Use structured markdown with clear component tables for architecture and numbered step sequences for user flows. Make it agent-ready and professional."""
+Generate all 8 files using industry expertise. Use structured markdown with clear component tables for architecture and numbered step sequences for user flows. Make it agent-ready and professional."""
 
 
 
@@ -1047,13 +1139,30 @@ Generate all 5 files using industry expertise. Use structured markdown with clea
         )
     
     @staticmethod
-    def format_generate_mvp(idea: str, research_summary: Dict[str, Any]) -> str:
+    def format_generate_mvp(
+        idea: str, 
+        research_summary: Dict[str, Any],
+        tech_preference: str = "",
+        platform: str = "",
+        constraint: str = ""
+    ) -> str:
         """Format the MVP generation prompt"""
         import json
         summary_str = json.dumps(research_summary, indent=2)
+        
+        constraints_block = ""
+        if any([tech_preference, platform, constraint]):
+            constraints_block = "## User Configuration:\n"
+            if platform: constraints_block += f"- Target Platform: {platform}\n"
+            if tech_preference: constraints_block += f"- Preferred Tech Stack: {tech_preference}\n"
+            if constraint: constraints_block += f"- Key Constraints: {constraint}\n"
+        else:
+            constraints_block = "No specific technical constraints provided. Determine the best stack based on the use case."
+
         return PromptTemplates.GENERATE_MVP.format(
             idea=idea,
-            research_summary=summary_str
+            research_summary=summary_str,
+            user_constraints=constraints_block
         )
     
     @staticmethod

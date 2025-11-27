@@ -96,6 +96,21 @@ class FileManagerMCPClient:
             print(f"[MCP][ERROR] file-manager-mcp.zip_files failed: {e}")
             return {"success": False, "path": None, "message": str(e)}
 
+    def create_zip_from_memory(self, files: Dict[str, str], output_filename: str) -> Dict[str, Any]:
+        url = f"{self.base_url}/create_zip_from_memory"
+        payload = {"files": files, "output_filename": output_filename}
+        print(f"[MCP] → file-manager-mcp.create_zip_from_memory {output_filename}")
+        
+        def make_request(timeout):
+            resp = requests.post(url, json=payload, timeout=timeout)
+            return resp.json()
+        
+        try:
+            return _retry_request(make_request, max_retries=3, timeout=30)
+        except Exception as e:
+            print(f"[MCP][ERROR] file-manager-mcp.create_zip_from_memory failed: {e}")
+            return {"success": False, "path": None, "message": str(e)}
+
 
 class GoogleSearchMCPClient:
     """

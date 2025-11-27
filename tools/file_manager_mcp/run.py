@@ -3,7 +3,8 @@ import io
 import zipfile
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
+import tempfile
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -33,6 +34,9 @@ class ZipFilesRequest(BaseModel):
     source_dir: Optional[str] = None
     zip_path: Optional[str] = None
 
+class ZipInMemoryRequest(BaseModel):
+    files: Dict[str, str]
+    output_filename: str
 
 def ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -55,6 +59,29 @@ def create_file(payload: CreateFileRequest):
             "success": False,
             "path": payload.filename,
             "message": f"Failed to create file: {e}"
+        }
+
+@app.post("/create_zip_from_memory")
+def create_zip_from_memory(payload: ZipInMemoryRequest):
+    try:
+        # Use system temp directory
+        tmp_dir = tempfile.gettempdir()
+        zip_path = os.path.join(tmp_dir, payload.output_filename)
+        
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for filename, content in payload.files.items():
+                zipf.writestr(filename, content)
+        
+        return {
+            "success": True,
+            "path": zip_path,
+            "message": "Zip created successfully."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "path": None,
+            "message": f"Failed to create ZIP archive: {e}"
         }
 
 
