@@ -270,7 +270,7 @@ class ModelRouter:
             'planning': ModelType.FLASH,       # Medium complexity
             'search_query': ModelType.FLASH_LITE,  # Simple, fast
             'simple': ModelType.FLASH_LITE,      # Basic tasks
-            'generation': ModelType.FLASH,     # Content generation
+            'generation': ModelType.PRO,       # Content generation (MVP files) - Pro for large context
         }
         
         model_type = task_mapping.get(task, ModelType.FLASH)
@@ -284,24 +284,26 @@ class ModelRouter:
     def route_json(self, task: str, prompt: str, **kwargs) -> Dict[str, Any]:
         """
         Route to appropriate model for JSON generation
-        
+
         Args:
             task: Task type
             prompt: The prompt to send
             **kwargs: Additional arguments
-            
+
         Returns:
             Parsed JSON response
         """
         task_mapping = {
-            'synthesis': ModelType.PRO,
-            'analysis': ModelType.PRO,
-            'planning': ModelType.FLASH,
-            'simple': ModelType.FLASH_LITE,
+            'synthesis': ModelType.PRO,        # Complex reasoning
+            'analysis': ModelType.PRO,         # Deep analysis
+            'planning': ModelType.FLASH,       # Medium complexity
+            'search_query': ModelType.FLASH_LITE,  # Simple, fast
+            'simple': ModelType.FLASH_LITE,      # Basic tasks
+            'generation': ModelType.PRO,       # Content generation (MVP files) - Pro for large context
         }
-        
+
         model_type = task_mapping.get(task, ModelType.FLASH)
-        
+
         return self.client.generate_json(
             prompt=prompt,
             model_type=model_type,

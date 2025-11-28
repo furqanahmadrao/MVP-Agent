@@ -1,29 +1,6 @@
----
-title: MVP Agent - AI-Powered Blueprint Generator
-emoji: "🚀"
-colorFrom: indigo
-colorTo: purple
-sdk: gradio
-sdk_version: 5.49.1
-app_file: app.py
-pinned: false
-tags:
-   - mcp-in-action-track
-   - agents
-   - mvp
-   - market-research
-   - gemini
-   - mcp
-   - startup
-   - product-management
-models:
-   - google/gemini-2.5-pro
-   - google/gemini-2.5-flash
-short_description: AI agent that generates MVP blueprints and roadmaps
----
 # MVP Agent
 
-**AI-powered MVP Blueprint Generator for MCP Hackathon 2025 – Track 2: MCP In Action (Agents)**
+**AI-powered MVP Blueprint Generator**
 
 Transform any startup idea into a complete, production-ready MVP specification in under 2 minutes. MVP Agent combines AI reasoning with real-time market research to deliver actionable blueprints that engineering teams can implement immediately.
 
@@ -54,8 +31,8 @@ All outputs are **opinionated**, **implementation-ready**, and use **structured 
 ## 🎬 Demo & Resources
 
 - **📹 Demo Video:** [Watch on YouTube](https://youtube.com/your-demo-video) *(Update with your video link)*
-- **📝 Blog Post:** [Read the full story](https://your-blog.com/mvp-agent) *(Update with your blog link)*
-- **💼 LinkedIn Post:** [Join the discussion](https://linkedin.com/posts/your-post) *(Update with your LinkedIn post link)*
+ - **📝 Blog Post:** [Read the full story](https://dev.to/furqanahmadrao/mvp-agent-ai-powered-mvp-blueprints-gradio-gemini-mcp-2mp5)
+ - **💼 LinkedIn Post:** [Join the discussion](https://www.linkedin.com/posts/furqanahmadrao_mcp1stbirthday-ai-hackathon-activity-7393878758564339712-mvaq?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFNc81MBkk13VySrZD_UKhkgv7SAtdCaV48)
 
 ---
 
@@ -73,25 +50,50 @@ All outputs are **opinionated**, **implementation-ready**, and use **structured 
 MVP Agent is a **multi-phase autonomous agent** powered by Google Gemini and custom MCP servers:
 
 ### Phase 1: Intent Understanding 🧠
+- **Model:** Gemini 2.5 Flash-Lite (fastest, cheapest for simple queries)
 - Analyzes your idea to identify target users, core problems, and success metrics
-- Generates strategic research queries (now 7 high-quality, focused queries)
+- Generates strategic research queries (7 high-quality, focused queries)
+- **Fallback:** Flash-Lite retry → Hardcoded queries
 
 ### Phase 2: Market Research 🔍
+- **Model:** N/A (MCP server calls only)
 - Uses **Google Custom Search MCP** to research competitors and market trends
 - Gathers real user feedback and pain points from the web
-- Synthesizes insights from multiple sources
+- **Fallback:** Legacy research orchestrator
 
 ### Phase 3: Analysis & Synthesis 📊
+- **Model:** Gemini 2.5 Flash (good balance of speed and quality)
 - Identifies market gaps and opportunities
 - Maps feature requirements to user needs
 - Determines optimal technical architecture
+- **Fallback:** Flash-Lite → Hardcoded summary
 
--### Phase 4: Blueprint Generation ✨
+### Phase 4: Blueprint Generation ✨
+- **Model:** Gemini 2.5 Pro (large context window for comprehensive MVP files)
 - Creates 8 detailed markdown documents (overview, features, architecture, design, user_flow, roadmap, business_model, testing_plan)
 - Generates structured tables and step-by-step flows
-- Packages everything into a downloadable ZIP
+- Normalizes markdown via **Markdownify MCP**
+- Packages everything into a downloadable ZIP via **File Manager MCP**
+- **Fallback:** Flash-Lite → Hardcoded templates
 
 **Total time:** ~60-90 seconds per blueprint
+
+### 🤖 Model Selection Strategy
+
+MVP Agent uses **intelligent model routing** to balance quality, speed, and cost:
+
+| Phase | Primary Model | Fallback | Rationale |
+|-------|--------------|----------|-----------|
+| **Query Generation** | Flash-Lite | Flash-Lite | Simple task, needs speed |
+| **Research** | N/A (MCP) | N/A | External API calls only |
+| **Synthesis** | Flash | Flash-Lite | Good balance of speed & quality |
+| **Generation** | **Pro** | Flash-Lite | Large context needed (18K+ words) |
+
+**Why Pro for Generation?**
+- Flash's context window is too small for generating 8 comprehensive files (~18,000 words)
+- Pro handles large outputs in a single API call (no chunking needed)
+- Pro has 2 RPM limit, but we generate all 8 files in **one request** (well under limit)
+- Eliminates failed Flash attempts, saving ~15 seconds per generation
 
 ---
 
@@ -197,9 +199,21 @@ GOOGLE_API_KEY=your_google_cloud_api_key
 GOOGLE_SEARCH_ENGINE_ID=your_custom_search_engine_id
 ```
 
-### Default Quotas:
-- Google Custom Search: 100 queries/day (free tier)
-- Gemini API: Check your Google Cloud quota
+### API Rate Limits & Quotas:
+
+**Gemini API (Free Tier):**
+- **Flash-Lite:** 15 RPM (requests per minute)
+- **Flash:** 15 RPM
+- **Pro:** 2 RPM ⚠️
+
+**Our Usage Pattern:**
+- Phase 1: 1-2 Flash-Lite calls (query generation)
+- Phase 3: 1 Flash call (synthesis)
+- Phase 4: 1 Pro call (generation of all 8 files)
+- **Total:** ~1 Pro call per blueprint = well within 2 RPM limit
+
+**Google Custom Search (Free Tier):**
+- 100 queries/day
 - Configurable via `src/google_quota.py`
 
 ---

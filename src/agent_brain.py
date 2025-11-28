@@ -133,21 +133,21 @@ class MVPAgent:
     
     def _generate_search_queries(self, idea: str) -> Dict[str, list]:
         """
-        Phase 1: Generate search queries (Flash Lite with fallback)
-        
+        Phase 1: Generate search queries (Flash-Lite)
+
         Args:
             idea: Startup idea
-            
+
         Returns:
             Dictionary with competitor_queries and pain_point_queries
         """
         self._update_status("Starting query generation (Phase 1)...", type="DEBUG", phase="planning")
         prompt = self.prompts.format_search_queries(idea)
-        
-        # Try Flash Lite first
+
+        # Try Flash-Lite first (fastest, cheapest for simple queries)
         try:
             queries = self.model_router.route_json(
-                task="planning",  # Flash Lite
+                task="search_query",  # Flash-Lite
                 prompt=prompt,
                 temperature=0.5
             )
@@ -158,22 +158,22 @@ class MVPAgent:
                 raise ValueError("Invalid query structure")
             
             self.state.data['queries'] = queries
-            self._update_status("Query generation successful (Flash Lite).", type="SUCCESS", phase="planning")
+            self._update_status("Query generation successful (Flash-Lite).", type="SUCCESS", phase="planning")
             return queries
             
         except Exception as e1:
-            self._update_status("⚠️ Retrying query generation (Flash)...", type="WARNING", phase="planning", details={"error": str(e1)})
+            self._update_status("⚠️ Retrying query generation (Flash-Lite)...", type="WARNING", phase="planning", details={"error": str(e1)})
             time.sleep(2)
             queries = self.model_router.route_json(
-                task="generation",  # Flash
+                task="search_query",  # Flash-Lite
                 prompt=prompt,
                 temperature=0.5
             )
             self.total_tokens_used += self.gemini_client.get_token_usage() # Accumulate tokens
             if "competitor_queries" in queries and "pain_point_queries" in queries:
-                self._update_status("Query generation successful (Flash fallback).", type="SUCCESS", phase="planning")
+                self._update_status("Query generation successful (Flash-Lite fallback).", type="SUCCESS", phase="planning")
                 return queries
-            raise ValueError("Invalid structure from Flash")
+            raise ValueError("Invalid structure from Flash-Lite")
         except Exception as e2:
             self._update_status("⚠️ Using hardcoded fallback queries...", type="WARNING", phase="planning", details={"error": str(e2)})
             return {
@@ -257,12 +257,12 @@ class MVPAgent:
         research_results: Dict[str, str]
     ) -> Dict[str, Any]:
         """
-        Phase 3: Synthesize research (Flash with fallback)
-        
+        Phase 3: Synthesize research (Flash with fallback to Flash-Lite)
+
         Args:
             idea: Startup idea
             research_results: Raw research data
-            
+
         Returns:
             Structured research summary
         """
@@ -272,8 +272,8 @@ class MVPAgent:
             web_results=research_results.get("web_results", "No data"),
             social_results=research_results.get("social_results", "No data")
         )
-        
-        # Try Flash first
+
+        # Try Flash first (good balance of speed and quality)
         try:
             summary = self.model_router.route_json(
                 task="planning",  # Flash (15 RPM)
@@ -281,18 +281,18 @@ class MVPAgent:
                 temperature=0.4
             )
             self.total_tokens_used += self.gemini_client.get_token_usage() # Accumulate tokens
-            
+
             self.state.data['research_summary'] = summary
             self._update_status("Research summarization successful (Flash).", type="SUCCESS", phase="synthesis")
             return summary
-            
+
         except Exception as e1:
             # Fallback 1: Try Flash-Lite
             try:
                 self._update_status("⚠️ Retrying synthesis with Flash-Lite...", type="WARNING", phase="synthesis", details={"error": str(e1)})
                 time.sleep(2)
                 summary = self.model_router.route_json(
-                    task="query",  # Flash Lite
+                    task="simple",  # Flash-Lite
                     prompt=prompt,
                     temperature=0.4
                 )
@@ -320,7 +320,7 @@ class MVPAgent:
         constraint: str = ""
     ) -> Dict[str, str]:
         """
-        Phase 4: Generate MVP files (Flash with fallback to Pro)
+        Phase 4: Generate MVP files (Pro with fallback to Flash-Lite)
         
         Args:
             idea: Startup idea
@@ -350,15 +350,15 @@ class MVPAgent:
             constraint=constraint
         )
         
-        # Add delay to respect rate limits
+        # Add delay to respect rate limits (Pro: 2 RPM)
         time.sleep(7)
-        
-        # Try Flash first
+
+        # Try Pro first (better context window for large MVP generation)
         try:
-            self._update_status("Generating MVP files using Flash model...", type="INFO", phase="generation")
+            self._update_status("Generating MVP files using Pro model...", type="INFO", phase="generation")
             # First pass: generate raw files
             files = self.model_router.route_json(
-                task="generation",  # Flash (15 RPM)
+                task="generation",  # Pro (2 RPM, large context)
                 prompt=prompt,
                 temperature=0.6
             )
@@ -380,7 +380,7 @@ class MVPAgent:
                 if key not in files:
                     raise ValueError(f"Missing file: {key}")
 
-            self._update_status("MVP files generated by Flash. Normalizing markdown...", type="DEBUG", phase="generation")
+            self._update_status("MVP files generated by Pro. Normalizing markdown...", type="DEBUG", phase="generation")
             # Normalize markdown via markdownify-mcp (MCP call visible in logs)
             normalized_files = {}
             for key in required_keys:
@@ -396,27 +396,27 @@ class MVPAgent:
             return normalized_files
             
         except Exception as e1:
-            # Fallback 1: Try Pro model (better quality, lower RPM)
+            # Fallback 1: Try Flash-Lite model (simpler, faster)
             try:
-                self._update_status("⚠️ Flash model failed. Retrying with Pro model...", type="WARNING", phase="generation", details={"error": str(e1)})
+                self._update_status("⚠️ Pro model failed. Retrying with Flash-Lite model...", type="WARNING", phase="generation", details={"error": str(e1)})
                 time.sleep(5)
                 files = self.model_router.route_json(
-                    task="synthesis",  # Pro
+                    task="simple",  # Flash-Lite
                     prompt=prompt,
                     temperature=0.6
                 )
                 self.total_tokens_used += self.gemini_client.get_token_usage() # Accumulate tokens
-                
+
                 # Validate
 
                 for key in ["overview_md", "features_md", "architecture_md", "design_md", "user_flow_md", "roadmap_md", "business_model_md", "testing_plan_md"]:
                     if key not in files:
                         raise ValueError(f"Missing {key}")
-                self._update_status("MVP files generated by Pro model fallback.", type="SUCCESS", phase="generation")
+                self._update_status("MVP files generated by Flash-Lite model fallback.", type="SUCCESS", phase="generation")
                 return files
             except Exception as e2:
                 # If both fail, raise to trigger main fallback
-                raise Exception(f"File generation failed with both Flash and Pro: {str(e2)}")
+                raise Exception(f"File generation failed with both Pro and Flash-Lite: {str(e2)}")
     
     def _generate_fallback(self, idea: str, error: str) -> Dict[str, str]:
         """
@@ -437,16 +437,16 @@ class MVPAgent:
         )
         
         try:
-            self._update_status("Trying Flash Lite for fallback generation...", type="INFO", phase="fallback")
-            # Try Flash Lite as last resort
+            self._update_status("Trying Pro for fallback generation...", type="INFO", phase="fallback")
+            # Try Pro as last resort (large context needed)
             time.sleep(3)
             files = self.model_router.route_json(
-                task="generation",
+                task="generation",  # Pro
                 prompt=prompt,
                 temperature=0.7
             )
             self.total_tokens_used += self.gemini_client.get_token_usage() # Accumulate tokens
-            self._update_status("Fallback generation successful (Flash Lite).", type="SUCCESS", phase="fallback")
+            self._update_status("Fallback generation successful (Pro).", type="SUCCESS", phase="fallback")
             return files
             
         except Exception as e:
