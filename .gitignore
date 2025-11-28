@@ -1,47 +1,32 @@
-# Environment variables (never push secrets)
-.env
-.env.*
-
-# Development/planning docs (not needed in production)
-AGENTS.md
-docs/
-.kiro/
-
-# Python cache and compiled files
+```
+# Compiled and build artifacts
+*.pyc
 __pycache__/
-*.py[cod]
-*$py.class
+*.o
+*.obj
 
-# Logs and outputs (generated at runtime)
-logs/
-logs/mermaid/
+# Dependencies
+.venv/
+venv/
+node_modules/
+
+# Logs and temp files
 *.log
-outputs/
+*.tmp
+*.swp
 
-# IDE and editor settings
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
 .vscode/
-.history/
 .idea/
 
-# OS files
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
-
-# Python packaging and build artifacts
-build/
-dist/
-*.egg-info/
-
-# Virtual environments
-venv/
-env/
-.venv/
-.envrc
-
-# Testing artifacts (not needed on HF Spaces)
-tests/
+# Testing
 .pytest_cache/
 .coverage
+coverage/
 htmlcov/
+```
