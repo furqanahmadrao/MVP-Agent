@@ -245,14 +245,21 @@ def get_mcp_manager() -> MCPManager:
     return _mcp_manager
 
 
+def get_agent_keys_env_status() -> Dict[str, str]:
+    """Get the environment variable status for API keys."""
+    return {
+        "GEMINI_API_KEY": "set" if os.getenv("GEMINI_API_KEY") else "unset",
+        "GOOGLE_CSE_ID": "set" if os.getenv("GOOGLE_CSE_ID") else "unset",
+        "GOOGLE_API_KEY": "set" if os.getenv("GOOGLE_API_KEY") else "unset",
+    }
+
 def get_agent():
     """Get or create the agent instance"""
     global _agent
     if _agent is None:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY not found in environment variables. Please add it to your .env file.")
-        _agent = create_agent(api_key)
+        # Initial agent creation without keys, as they are passed per-call now.
+        # The key validation will happen within agent_worker or create_agent.
+        _agent = create_agent(api_key=None) # No API key passed at initial creation
     return _agent
 
 def get_file_mgr():
@@ -278,7 +285,8 @@ def format_log_entries(log_events: List[Dict]) -> str:
 
 
 # Main MVP generation function
-def generate_mvp(idea: str, tech_preference: str = "", platform: str = "", constraint: str = ""):
+def generate_mvp(idea: str, tech_preference: str = "", platform: str = "", constraint: str = "",
+                 gemini_api_key: str = "", google_cse_id: str = "", google_api_key: str = ""):
     """
     Main function to generate MVP specifications using the real agent.
     """
@@ -334,11 +342,20 @@ def generate_mvp(idea: str, tech_preference: str = "", platform: str = "", const
     def agent_worker():
         try:
             # Create a fresh agent instance for thread safety
-            api_key = os.getenv("GEMINI_API_KEY")
-            if not api_key:
-                raise ValueError("GEMINI_API_KEY not found. Check .env file.")
-                
-            agent = create_agent(api_key)
+            # Prioritize UI-provided API keys, fallback to .env
+            effective_gemini_api_key = gemini_api_key if gemini_api_key else os.getenv("GEMINI_API_KEY")
+            effective_google_cse_id = google_cse_id if google_cse_id else os.getenv("GOOGLE_CSE_ID")
+            effective_google_api_key = google_api_key if google_api_key else os.getenv("GOOGLE_API_KEY")
+
+            if not effective_gemini_api_key:
+                raise ValueError("Gemini API Key not found. Please provide it in the UI or set GEMINI_API_KEY in your .env file.")
+
+            # Set environment variables for MCP clients and other tools within this thread's context
+            os.environ["GEMINI_API_KEY"] = effective_gemini_api_key
+            if effective_google_cse_id: os.environ["GOOGLE_CSE_ID"] = effective_google_cse_id
+            if effective_google_api_key: os.environ["GOOGLE_API_KEY"] = effective_google_api_key
+
+            agent = create_agent(effective_gemini_api_key)
             file_mgr = get_file_mgr()
             
             def status_callback(status_event: Dict):
@@ -505,6 +522,53 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
                     placeholder="e.g. Must be Open Source, Max $50/mo hosting, HIPAA compliant...",
                     info="Any specific limitations or requirements?"
                 )
+                with gr.Row():
+                    gemini_api_key_input = gr.Textbox(
+                        label="Gemini API Key",
+                        type="password",
+                        placeholder="Enter your Gemini API Key",
+                        info="Required for AI generation. Stored in browser session.",
+                        container=False,
+                        elem_id="gemini-api-key-input",
+                        value=None,
+                        data_env_state=get_agent_keys_env_status()["GEMINI_API_KEY"],
+                    )
+                    gemini_api_key_source_display = gr.HTML(
+                        "<span style=\'font-size: 0.8em; color: var(--text-gray);\'></span>",
+                        elem_id="gemini-api-key-source-display"
+                    )
+                with gr.Row():
+                    google_cse_id_input = gr.Textbox(
+                        label="Google Custom Search Engine ID",
+                        type="password",
+                        placeholder="Enter your Google CSE ID",
+                        info="Required for Google Search. Stored in browser session.",
+                        container=False,
+                        elem_id="google-cse-id-input",
+                        value=None,
+                        data_env_state=get_agent_keys_env_status()["GOOGLE_CSE_ID"],
+                    )
+                    google_cse_id_source_display = gr.HTML(
+                        "<span style=\'font-size: 0.8em; color: var(--text-gray);\'></span>",
+                        elem_id="google-cse-id-source-display"
+                    )
+                with gr.Row():
+                    google_api_key_input = gr.Textbox(
+                        label="Google API Key",
+                        type="password",
+                        placeholder="Enter your Google API Key",
+                        info="Required for Google Search. Stored in browser session.",
+                        container=False,
+                        elem_id="google-api-key-input",
+                        value=None,
+                        data_env_state=get_agent_keys_env_status()["GOOGLE_API_KEY"],
+                    )
+                    google_api_key_source_display = gr.HTML(
+                        "<span style=\'font-size: 0.8em; color: var(--text-gray);\'></span>",
+                        elem_id="google-api-key-source-display"
+                    )
+                with gr.Row():
+                    clear_keys_btn = gr.Button("Clear Session API Keys", variant="secondary")
 
             generate_btn = gr.Button(
                 "🎯 Generate MVP Blueprint",
@@ -565,7 +629,9 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
     # Event handler - Production Mode
     generate_btn.click(
         fn=generate_mvp,
-        inputs=[idea_input, tech_input, platform_input, constraint_input],
+        inputs=[idea_input, tech_input, platform_input, constraint_input,
+            gemini_api_key_input, google_cse_id_input, google_api_key_input
+        ],
         outputs=[
             current_phase_display,
             elapsed_time_display,
@@ -581,9 +647,90 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as dem
             roadmap_display,
             business_model_display,
             testing_plan_display,
+            gemini_api_key_source_display,
+            google_cse_id_source_display,
+            google_api_key_source_display
         ],
         show_progress="hidden"  # Hide Gradio's default processing window
     )
+
+
+
+            # Client-side JavaScript for session storage and UI updates
+            demo.load(
+                None,
+                inputs=None,
+                outputs=[
+                    gemini_api_key_input, gemini_api_key_source_display,
+                    google_cse_id_input, google_cse_id_source_display,
+                    google_api_key_input, google_api_key_source_display
+                ],
+                _js="""
+                () => {
+                    const keys = {
+                        'GEMINI_API_KEY': null,
+                        'GOOGLE_CSE_ID': null,
+                        'GOOGLE_API_KEY': null,
+                    };
+
+                    const updateUI = () => {
+                        const outputs = {};
+                        for (const key in keys) {
+                            const storedValue = sessionStorage.getItem(key);
+                            // The inputs for password fields will not have a data-env-value,
+                            // so we will need to check the os.getenv values in the backend.
+                            // For now, we assume if no storedValue, it's from .env or not set.
+                            const inputElement = document.getElementById(key.toLowerCase().replace(/_/g, '-') + '-input');
+                            const currentEnvState = inputElement ? inputElement.getAttribute('data-env-state') : 'unset'; // From backend
+
+                            if (storedValue) {
+                                outputs[key.toLowerCase().replace(/_/g, '-') + '_input'] = storedValue;
+                                outputs[key.toLowerCase().replace(/_/g, '-') + '_source_display'] = `<span style=\'font-size: 0.8em; color: var(--success-color);\'>Loaded from UI (session)</span>`;
+                            } else if (currentEnvState === 'set') {
+                                outputs[key.toLowerCase().replace(/_/g, '-') + '_input'] = ''; // Don't pre-fill .env values into password fields
+                                outputs[key.toLowerCase().replace(/_/g, '-') + '_source_display'] = `<span style=\'font-size: 0.8em; color: var(--info-color);\'>Loaded from .env</span>`;
+                            } else {
+                                outputs[key.toLowerCase().replace(/_/g, '-') + '_input'] = '';
+                                outputs[key.toLowerCase().replace(/_/g, '-') + '_source_display'] = `<span style=\'font-size: 0.8em; color: var(--warning-color);\'>No key set</span>`;
+                            }
+                        }
+                        return [outputs.gemini_api_key_input, outputs.gemini_api_key_source_display, outputs.google_cse_id_input, outputs.google_cse_id_source_display, outputs.google_api_key_input, outputs.google_api_key_source_display];
+                    };
+
+                    // Initial load and setup event listeners
+                    setTimeout(() => {
+                        updateUI();
+
+                        for (const key in keys) {
+                            const inputId = key.toLowerCase().replace(/_/g, '-') + '-input';
+                            const inputElement = document.getElementById(inputId);
+                            if (inputElement) {
+                                inputElement.addEventListener('input', (e) => {
+                                    if (e.target.value) {
+                                        sessionStorage.setItem(key, e.target.value);
+                                    } else {
+                                        sessionStorage.removeItem(key);
+                                    }
+                                    updateUI(); // Update UI after change
+                                });
+                            }
+                        }
+
+                        const clearBtn = document.getElementById('clear-keys-btn');
+                        if (clearBtn) {
+                            clearBtn.addEventListener('click', () => {
+                                for (const key in keys) {
+                                    sessionStorage.removeItem(key);
+                                }
+                                updateUI(); // Update UI after clearing
+                                alert('Session API keys cleared. Falling back to .env if available.');
+                            });
+                        }
+
+                    }, 100); // Small delay to ensure Gradio elements are rendered
+                }
+                """
+            )
 
 # Launch the app
 if __name__ == "__main__":
