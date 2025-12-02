@@ -34,17 +34,20 @@ Generate a diverse set of highly targeted, contextually aware search queries tha
 8. Avoid redundancy—each query should explore a unique aspect or perspective
 
 ## Output Format:
-Return ONLY valid JSON with NO additional commentary. Structure:
+Return ONLY valid JSON with NO additional commentary. Generate EXACTLY 3-4 queries per category (total: 7 queries max) to respect Google Search API free tier limits (100 queries/day).
+
+Structure:
 {{
     "competitor_queries": [
         "exact query string 1",
-        ...existing code...
-        "exact query string 7"
+        "exact query string 2",
+        "exact query string 3"
     ],
     "pain_point_queries": [
         "exact query string 1",
-        ...existing code...
-        "exact query string 7"
+        "exact query string 2",
+        "exact query string 3",
+        "exact query string 4"
     ]
 }}
 
@@ -63,19 +66,12 @@ Return ONLY valid JSON with NO additional commentary. Structure:
     "competitor_queries": [
         "MyFitnessPal premium features pricing 2025",
         "Cronometer vs Lose It vs Noom feature comparison latest user reviews",
-        "meal planning app AI integration case studies Product Hunt 2024",
-        "Eat This Much business model revenue streams 2025",
-        "Yummly personalization algorithm patents and technical blogs",
-        "top rated meal prep apps for busy professionals 2025",
-        "best AI diet apps for weight loss reddit"
+        "meal planning app AI integration case studies Product Hunt 2024"
     ],
     "pain_point_queries": [
         "reddit.com/r/loseit meal tracking frustrations 2024",
         "MyFitnessPal food database accuracy complaints user feedback",
-        "meal prep app barcode scanner problems reviews and support tickets",
-        "nutrition tracking app cancelled subscription reasons 2025",
         "meal planning app reddit what features missing, user wishlists",
-        "why I stopped using meal planning apps reddit",
         "hardest part of tracking calories for working parents forum"
     ]
 }}
@@ -89,20 +85,13 @@ Return ONLY valid JSON with NO additional commentary. Structure:
     "competitor_queries": [
         "Todoist vs TickTick ADHD features comparison 2025",
         "Motion app AI scheduling algorithm how it works technical breakdown",
-        "Sunsama pricing tiers user retention rates 2024",
-        "Focus@Will neuroscience research validation and user testimonials",
-        "RescueTime productivity tracking metrics and adoption barriers",
-        "best adhd planners for adults 2025 reviews",
-        "Llama Life features vs competitors"
+        "best adhd planners for adults 2025 reviews"
     ],
     "pain_point_queries": [
         "reddit.com/r/ADHD productivity app recommendations failures 2025",
-        "Asana overwhelm context switching complaints user stories",
         "Notion too complex ADHD users reviews and feedback",
-        "Pomodoro technique not working ADHD forum discussions and alternatives",
-        "productivity app push notifications burnout, user coping strategies",
         "why traditional to-do lists fail for adhd reddit",
-        "executive dysfunction app feature requests"
+        "productivity app push notifications burnout, user coping strategies"
     ]
 }}
 </good_queries>

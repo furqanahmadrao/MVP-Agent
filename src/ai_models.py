@@ -32,11 +32,21 @@ def _extract_json_block(text: str) -> Optional[str]:
     text = text.strip()
     
     # Strategy 1: Extract from code blocks (```json or ```)
-    # Match ```json...``` or ```...```
-    code_block_pattern = r'```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```'
-    match = re.search(code_block_pattern, text, re.DOTALL)
-    if match:
-        return match.group(1).strip()
+    # Find opening and closing markers, extract everything in between
+    start_patterns = ['```json\n', '```json ', '```json', '```\n', '``` ', '```']
+    for start_pattern in start_patterns:
+        start_idx = text.find(start_pattern)
+        if start_idx != -1:
+            # Find the content start (after the opening marker)
+            content_start = start_idx + len(start_pattern)
+            # Find the closing marker
+            end_idx = text.find('```', content_start)
+            if end_idx != -1:
+                extracted = text[content_start:end_idx].strip()
+                # Verify it starts with { or [
+                if extracted and extracted[0] in ('{', '['):
+                    return extracted
+            break
     
     # Strategy 2: Find first balanced JSON object or array
     # Find which comes first - object or array

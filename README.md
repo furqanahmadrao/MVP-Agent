@@ -1,6 +1,6 @@
 # MVP Agent
 
-**AI-powered MVP Blueprint Generator**
+**AI-powered MVP Blueprint Generator for MCP Hackathon 2025 – Track 2: MCP In Action (Agents)**
 
 Transform any startup idea into a complete, production-ready MVP specification in under 2 minutes. MVP Agent combines AI reasoning with real-time market research to deliver actionable blueprints that engineering teams can implement immediately.
 
@@ -30,7 +30,7 @@ All outputs are **opinionated**, **implementation-ready**, and use **structured 
 
 ## 🎬 Demo & Resources
 
-- **📹 Demo Video:** [Watch on YouTube](https://youtube.com/your-demo-video) *(Update with your video link)*
+- **📹 Demo Video:** [Watch on YouTube](https://youtu.be/rA8rnS_nzEg)
  - **📝 Blog Post:** [Read the full story](https://dev.to/furqanahmadrao/mvp-agent-ai-powered-mvp-blueprints-gradio-gemini-mcp-2mp5)
  - **💼 LinkedIn Post:** [Join the discussion](https://www.linkedin.com/posts/furqanahmadrao_mcp1stbirthday-ai-hackathon-activity-7393878758564339712-mvaq?utm_source=share&utm_medium=member_desktop&rcm=ACoAAFNc81MBkk13VySrZD_UKhkgv7SAtdCaV48)
 
@@ -72,9 +72,9 @@ MVP Agent is a **multi-phase autonomous agent** powered by Google Gemini and cus
 - **Model:** Gemini 2.5 Pro (large context window for comprehensive MVP files)
 - Creates 8 detailed markdown documents (overview, features, architecture, design, user_flow, roadmap, business_model, testing_plan)
 - Generates structured tables and step-by-step flows
-- Normalizes markdown via **Markdownify MCP**
+- Sanitizes markdown (removes invisible characters)
 - Packages everything into a downloadable ZIP via **File Manager MCP**
-- **Fallback:** Flash-Lite → Hardcoded templates
+- **Fallback:** Pro retry (35s delay for rate limits) → Hardcoded templates
 
 **Total time:** ~60-90 seconds per blueprint
 
@@ -84,16 +84,22 @@ MVP Agent uses **intelligent model routing** to balance quality, speed, and cost
 
 | Phase | Primary Model | Fallback | Rationale |
 |-------|--------------|----------|-----------|
-| **Query Generation** | Flash-Lite | Flash-Lite | Simple task, needs speed |
+| **Query Generation** | Flash-Lite | Flash-Lite retry | Simple task, needs speed |
 | **Research** | N/A (MCP) | N/A | External API calls only |
 | **Synthesis** | Flash | Flash-Lite | Good balance of speed & quality |
-| **Generation** | **Pro** | Flash-Lite | Large context needed (18K+ words) |
+| **Generation** | **Pro** | Pro retry (35s wait) | Large context needed (18K+ words) |
 
 **Why Pro for Generation?**
 - Flash's context window is too small for generating 8 comprehensive files (~18,000 words)
 - Pro handles large outputs in a single API call (no chunking needed)
 - Pro has 2 RPM limit, but we generate all 8 files in **one request** (well under limit)
 - Eliminates failed Flash attempts, saving ~15 seconds per generation
+
+**Why Retry Same Model Instead of Downgrading?**
+- If Pro fails, it's usually due to: transient network errors, rate limits, or API timeouts
+- Downgrading to Flash-Lite makes no sense: if Pro (most capable) can't do it, Flash-Lite (least capable) definitely can't
+- Retrying Pro after 35s delay respects the 2 RPM rate limit (30s minimum between calls)
+- If Pro fails twice, we skip to hardcoded templates (no pointless downgrades)
 
 ---
 
