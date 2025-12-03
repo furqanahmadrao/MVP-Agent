@@ -371,3 +371,153 @@ This project was built for the **Model Context Protocol (MCP) 1st Birthday Hacka
 ---
 
 **Built with ❤️ using Google Gemini, Gradio, and Model Context Protocol**
+
+---
+
+# December 2025 Update — README Sync with Current Codebase
+
+This appendix brings the README fully in sync with the repository’s current state as of December 3, 2025. It documents the live code paths, MCP servers, environment variables, UI flows, agent orchestration, error handling, and health checks. It complements the sections above without removing them, so prior links continue to work.
+
+If you are new, you can start here; otherwise, treat this as the authoritative delta against earlier README content.
+
+## Tech Stack Overview
+- Runtime/UI: Python 3.10+, Gradio 5.x (dark orange/black theme)
+- LLMs: Google Gemini 2.5 models via google-generativeai (Pro, Flash, Flash-Lite)
+- MCP-style internal tools: FastAPI + Uvicorn HTTP servers
+  - file-manager-mcp (port 8081)
+  - google-search-mcp (port 8082)
+  - markdownify-mcp (port 8083)
+- HTTP clients with retry/backoff: requests
+- Async web search client and quota tracking: aiohttp + custom quota tracker
+- Env management: python-dotenv
+
+Key modules (src/):
+- agent_brain.py — Orchestrates the 4 phases; model routing; fallbacks; status events
+- ai_models.py — Gemini integration; JSON extraction; model router
+- mcp_http_clients.py — HTTP clients for the three MCP servers with retries and local fallbacks
+- mcp_process_manager.py — Starts/stops MCP servers and checks health before launching UI
+- mcp_clients.py — Legacy research orchestrator (web-only), quota/caching policies
+- file_manager.py — In-memory ZIP packaging with MCP-first, local fallback
+- prompts.py — All prompt templates and formats for each phase
+- validators.py — Input and output validators; sanitization
+- error_handler.py — Structured logging, user-friendly errors, categories and severities
+- google_quota.py — Daily quota tracking for Google Custom Search
+- hf_compat.py — Shim for HF Hub OAuth imports across gradio/hf versions
+
+Internal MCP servers (tools/):
+- tools/file_manager_mcp: /health, /create_file, /validate_markdown, /zip_files, /create_zip_from_memory (8081)
+- tools/google_search_mcp: /health, /search (8082)
+- tools/markdownify_mcp: /health, /format (8083)
+
+## Setup (Local)
+1) Create a virtual environment and install deps
+
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+2) Configure environment variables (create a .env at repo root)
+
+Required:
+```bash
+GEMINI_API_KEY=your_gemini_api_key
+```
+Optional (enable real search and fine-tune quotas):
+```bash
+GOOGLE_API_KEY=your_google_cloud_api_key
+GOOGLE_SEARCH_ENGINE_ID=your_cse_id
+# Quota knobs for google custom search (used by src/google_quota.py)
+GOOGLE_DAILY_QUOTA=100
+GOOGLE_MAX_RESULTS_PER_REQUEST=10
+GOOGLE_MAX_REQUESTS_PER_TASK=5
+GOOGLE_RETRY_ATTEMPTS=3
+
+# Override local MCP URLs if ports differ from defaults
+FILE_MANAGER_MCP_URL=http://127.0.0.1:8081
+GOOGLE_SEARCH_MCP_URL=http://127.0.0.1:8082
+MARKDOWNIFY_MCP_URL=http://127.0.0.1:8083
+```
+
+3) Run the app
+```bash
+python app.py
+```
+The app will start three MCP servers automatically, verify their health, and then launch Gradio. If any server fails, the app exits with a clear message and log path.
+
+## UI/UX Flow
+- Inputs: Startup Idea (textbox), plus optional Advanced Configuration: Target Platform (dropdown), Preferred Tech Stack (textbox), Key Constraints (textbox)
+- Status: Live “Agent Status - Mission Control” shows current phase, elapsed time, token usage, and a scrolling activity log with event levels (INFO/WARNING/ERROR/SUCCESS/DEBUG)
+- Outputs: Eight tabs render the generated markdown files; a ZIP download button appears when complete
+
+Note: The input label currently displays “estimated time: 8-10 min.” Actual runs typically complete faster on a healthy network and API (often ~1–3 minutes), but allow for retries/rate limits.
+
+## Agent Workflow & Fallbacks
+1) Planning — Generate 7 high-quality research queries (Gemini Flash-Lite; retry Flash-Lite → hardcoded queries)
+2) Research — Web search via google-search-mcp; if unavailable, fall back to legacy orchestrator (web-only)
+3) Synthesis — Summarize findings (Gemini Flash; fallback Flash-Lite → hardcoded summary)
+4) Generation — Produce 8 markdown files in one shot (Gemini Pro); on failure, retry Pro after ~35s; final fallback provides basic templates
+
+Model routing is defined in src/ai_models.py::ModelRouter, and token usage is tracked via GeminiClient. Status events with timestamps/elapsed seconds are emitted throughout src/agent_brain.py.
+
+## Architecture
+- app.py bootstraps MCP servers using MCPManager before serving the Gradio UI
+- MCPManager starts tools/* MCP servers as subprocesses and performs HTTP health checks with log-tail diagnostics on failure
+- All MCP servers expose /health and simple JSON endpoints; see tools/*/run.py for exact shapes
+- File packaging: src/file_manager.py first attempts /create_zip_from_memory on file-manager-mcp; if that fails, it writes a temp ZIP locally and returns the path. No persistent markdown files are written.
+
+Default ports:
+- file-manager-mcp — 8081
+- google-search-mcp — 8082
+- markdownify-mcp — 8083
+
+## Environment Variables (Complete)
+Required
+- GEMINI_API_KEY
+
+Optional — Search & Quotas
+- GOOGLE_API_KEY, GOOGLE_SEARCH_ENGINE_ID
+- GOOGLE_DAILY_QUOTA, GOOGLE_MAX_RESULTS_PER_REQUEST, GOOGLE_MAX_REQUESTS_PER_TASK, GOOGLE_RETRY_ATTEMPTS
+
+Optional — MCP URLs (override defaults if needed)
+- FILE_MANAGER_MCP_URL, GOOGLE_SEARCH_MCP_URL, MARKDOWNIFY_MCP_URL
+
+## Error Handling & Logging
+- Structured error classes with categories (API, VALIDATION, FILESYSTEM, NETWORK, PARSING, CONFIGURATION, UNKNOWN) and severities (LOW→CRITICAL) in src/error_handler.py
+- Daily log file written to logs/mvp_agent_YYYYMMDD.log; MCP server logs written to logs/file-manager-mcp.log, logs/google-search-mcp.log, logs/markdownify-mcp.log
+- User-facing errors include helpful guidance; technical details captured in logs for diagnostics
+
+## Health Checks
+If the UI fails to start, check MCP health endpoints directly in another terminal:
+```bash
+curl -s http://127.0.0.1:8081/health
+curl -s http://127.0.0.1:8082/health
+curl -s http://127.0.0.1:8083/health
+```
+If any are unhealthy, see the tail of their logs under logs/*.log as reported by MCPManager error messages.
+
+## Testing (Manual)
+There is no tests/ directory in this repo at present. Use this quick manual flow instead:
+1) Run: python app.py
+2) Enter a sample idea and click “Generate MVP Blueprint”
+3) Verify: status events stream; all eight tabs populate; the ZIP download appears; ZIP contains 9 files (8 markdown + a readme for the bundle)
+4) If Google keys are set, confirm that research steps mention google-search-mcp with non-empty results; without keys, placeholder research will be used
+
+## Hugging Face Spaces
+- Works out of the box; set required/optional secrets (GEMINI_API_KEY, GOOGLE_API_KEY, GOOGLE_SEARCH_ENGINE_ID) in Space settings
+- The app is single-process: Spaces will run app.py, which starts child MCP servers and exposes the UI
+- For public Spaces, consider API rate limits (Pro ~2 RPM). The code already spaces calls and retries Pro after ~35s when necessary.
+
+## Differences vs Previous README
+- Corrected MCP server list and documented all three with default ports and endpoints
+- Clarified environment overrides for MCP URLs and Google Custom Search quota tuning
+- Replaced reference to a non-existent tests/ directory with actionable manual checks
+- Documented current UI inputs (Platform, Tech Preference, Constraints) and live status metrics
+- Made ZIP packaging details explicit (in-memory first; local temp fallback)
+- Added logging/error handling section with file paths and categories
+- Reiterated model-routing and fallbacks exactly as implemented in src/agent_brain.py and src/ai_models.py
+
+---
+
+This section is maintained to reflect the code as of 2025-12-03. If you change ports, env keys, MCP endpoints, or UI flows, please update this appendix accordingly.
