@@ -6,7 +6,7 @@ Transform any startup idea into a complete, production-ready MVP specification i
 
 ## ✨ What You Get
 
-Input a single paragraph describing your startup idea. Get back **8 comprehensive, production-ready markdown files** containing **18,000+ words of detailed specifications** (50% more depth than typical MVP specs). Pure markdown, no diagram dependencies.
+Input a single paragraph describing your startup idea. Get back **8 comprehensive, production-ready markdown files**, meticulously structured according to predefined templates in `src/prompts.py`, containing **18,000+ words of detailed specifications** (50% more depth than typical MVP specs). Pure markdown, no diagram dependencies.
 
 - **📝 Overview.md** (~1,200 words) - High-level MVP overview, usage guidance for humans and LLM agents
 - **📋 Features.md** (~3,000 words) - Prioritized feature requirements (P0, P1, P2) with user personas
@@ -75,6 +75,14 @@ MVP Agent is a **multi-phase autonomous agent** powered by Google Gemini and cus
 - Sanitizes markdown (removes invisible characters)
 - Packages everything into a downloadable ZIP via **File Manager MCP**
 - **Fallback:** Pro retry (35s delay for rate limits) → Hardcoded templates
+
+### 💡 The Brains: `src/prompts.py`
+
+At the heart of the MVP Agent's intelligence is `src/prompts.py`. This file serves as the **single source of truth** for:
+
+- **AI Prompts**: All multi-phase AI prompts for Search Query Generation, Research Summarization, MVP Synthesis, and Fallback MVP Generation are defined here. This includes detailed identities, instructions, advanced query engineering rules, and precise JSON output formats.
+- **Agent Identities**: Specific personas and guidelines for each agent role (`search_planner`, `research_analyst`, `mvp_architect`, `fallback_architect`) are configured, dictating their behavior.
+- **Blueprint Structures**: The highly detailed "Required Structure" templates for each of the 8 output markdown files (e.g., `overview.md`, `features.md`, `architecture.md`) are meticulously defined. These templates specify mandatory sections, word counts, formatting (e.g., tables, numbered lists), and critical subsections like "Rationale" and "Agent Guidance." Developers and users can refer to this file for the exact expected output format.
 
 **Total time:** ~60-90 seconds per blueprint
 
@@ -251,7 +259,7 @@ mvp-agent/
 ├── app.py                    # Main Gradio application
 ├── requirements.txt          # Python dependencies
 ├── .env.example             # Environment template
-├── README.md                # This file
+├── README.md                # This file (serves as primary documentation; no dedicated docs/ directory)
 │
 ├── src/                     # Source code
 │   ├── agent_brain.py       # Core agent logic
