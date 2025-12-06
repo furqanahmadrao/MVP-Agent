@@ -84,4 +84,4 @@ jobs:
           additional_permissions: |
             actions: read
           claude_args: |
-            --allowed-tools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,mcp__github_comment__update_claude_comment,Bash(git *),Bash(gh *),Bash(npm *),Bash(npx *),Bash(yarn *),Bash(pnpm *),Bash(bun *),Bash(node *),Bash(python3 *),Bash(pip3 *),Bash(curl *),Bash(wget *),Bash(docker *),Bash(make *),Bash(cd *),Bash(ls *),Bash(cat *),Bash(grep *),Bash(find *),Bash(mkdir *),Bash(touch *),Bash(mv *),Bash(cp *),Bash(rm *),Bash(echo *)"
+            --allowed-tools "Edit,MultiEdit,Glob,Grep,LS,Read,Write,mcp__github_comment__update_claude_comment,Bash(git *),Bash(gh *),Bash(npm *),Bash(npx *),Bash(yarn *),Bash(pnpm *),Bash(bun *),Bash(node *),Bash(python3 *),Bash(pip3 *),Bash(curl *),Bash(wget *),Bash(cd *),Bash(ls *),Bash(cat *),Bash(grep *),Bash(find *),Bash(mkdir *),Bash(touch *),Bash(mv *),Bash(cp *),Bash(rm *),Bash(echo *)"
