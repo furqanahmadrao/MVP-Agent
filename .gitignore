@@ -1,6 +1,5 @@
 # Environment variables (never push secrets)
 .env
-.env.*
 
 # Development/planning docs (not needed in production)
 AGENTS.md
