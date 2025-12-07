@@ -39,25 +39,72 @@
 The MVP Agent uses a **Hub-and-Spoke** architecture where the central `MVPAgent` orchestrates interactions between the user, AI models, and local MCP tools.
 
 ```mermaid
-graph TD
-    User[User] -->|Input Idea| UI[Gradio UI]
-    UI -->|Start| Agent[MVP Agent Core]
+flowchart TD
+    %% User Interface Layer
+    User[👤 User] -->|Enters Idea + Config| GradioUI[🎨 Gradio UI<br/>app.py]
+    GradioUI -->|Validates Input| Validators[⚖️ Input Validators<br/>src/validators.py]
+    Validators -->|Sanitized Idea| GradioUI
     
-    subgraph "AI Brain (Gemini 2.5)"
-        Agent -->|Planning & Synthesis| Flash[Flash / Flash-Lite]
-        Agent -->|Deep Generation| Pro[Pro]
+    %% Core Orchestration
+    GradioUI -->|Starts Generation| MVPAgent[🤖 MVP Agent Core<br/>src/agent_brain.py]
+    MVPAgent -->|Status Updates| StatusDisplay[📊 Status Display<br/>Real-time Metrics]
+    StatusDisplay -->|Shows Progress| GradioUI
+    
+    %% AI Model Layer
+    MVPAgent -->|Route Tasks| ModelRouter[🔄 Model Router<br/>src/ai_models.py]
+    ModelRouter -->|Simple Queries| FlashLite[⚡ Gemini 2.5 Flash-Lite<br/>Search Query Generation]
+    ModelRouter -->|Research Synthesis| Flash[🚀 Gemini 2.5 Flash<br/>Research Analysis]
+    ModelRouter -->|File Generation| Pro[🧠 Gemini 2.5 Pro<br/>MVP Document Creation]
+    
+    FlashLite -->|Generated Queries| MVPAgent
+    Flash -->|Research Summary| MVPAgent
+    Pro -->|8 MVP Documents| MVPAgent
+    
+    %% MCP Server Layer
+    MVPAgent -->|Orchestrate Servers| MCPManager[🏗️ MCP Process Manager<br/>src/mcp_process_manager.py]
+    MCPManager -->|Start/Stop| MCPServers[🔄 MCP Servers]
+    
+    subgraph MCPServers[🔌 Local MCP Servers]
+        GoogleSearchMCP[🔍 Google Search MCP<br/>tools/google_search_mcp/run.py]
+        FileManagerMCP[📁 File Manager MCP<br/>tools/file_manager_mcp/run.py]
+        MarkdownifyMCP[📝 Markdownify MCP<br/>tools/markdownify_mcp/run.py]
     end
     
-    subgraph "MCP Layer (Local Servers)"
-        Agent -->|Orchestrate| Manager[MCP Process Manager]
-        Manager -->|Search| SearchMCP[Google Search MCP]
-        Manager -->|File Ops| FileMCP[File Manager MCP]
-        Manager -->|Format| MdMCP[Markdownify MCP]
+    %% External API Integrations
+    GoogleSearchMCP -->|API Calls| GoogleAPI[🌐 Google Custom Search API]
+    GoogleAPI -->|Search Results| GoogleSearchMCP
+    GoogleSearchMCP -->|Structured Data| MVPAgent
+    
+    %% File Processing Flow
+    MVPAgent -->|Save Files| FileManager[💾 File Manager<br/>src/file_manager.py]
+    FileManager -->|Create ZIP| FileManagerMCP
+    FileManagerMCP -->|ZIP Archive| GradioUI
+    GradioUI -->|Download| User
+    
+    %% Error Handling
+    MVPAgent -->|Error Events| ErrorHandler[⚠️ Error Handler<br/>src/error_handler.py]
+    ErrorHandler -->|Log Errors| Logs[📋 Application Logs<br/>logs/ directory]
+    ErrorHandler -->|User Messages| GradioUI
+    
+    %% State Management
+    MVPAgent -->|Track Progress| AgentState[📊 Agent State<br/>Phase, Tokens, Metrics]
+    AgentState -->|Update UI| StatusDisplay
+    
+    %% Environment Configuration
+    subgraph Config[⚙️ Configuration]
+        EnvVars[🔑 Environment Variables<br/>.env file]
+        APIKeys[🔐 API Keys<br/>Gemini + Google Search]
     end
     
-    SearchMCP -->|Web Results| Agent
-    Agent -->|Final Blueprint| Files[Markdown Files]
-    Files -->|ZIP Download| UI
+    MVPAgent -->|Requires| Config
+    GoogleSearchMCP -->|Requires| Config
+    
+    %% Data Flow Styling
+    linkStyle 0 stroke:blue,stroke-width:2px
+    linkStyle 1 stroke:green,stroke-width:2px
+    linkStyle 2 stroke:orange,stroke-width:2px
+    linkStyle 3 stroke:purple,stroke-width:2px
+    linkStyle 4 stroke:red,stroke-width:2px
 ```
 
 ---
