@@ -1,0 +1,31 @@
+{
+  "name": "markdownify-mcp",
+  "description": "MCP-style server that normalizes content into markdown for MVP Agent.",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "format_markdown",
+      "description": "Format or normalize text/HTML into markdown.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Input text or HTML to be converted to markdown."
+          }
+        },
+        "required": ["text"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "markdown": { "type": "string" },
+          "message": { "type": "string" }
+        },
+        "required": ["success", "markdown"]
+      }
+    }
+  ],
+  "entrypoint": "python -m tools.markdownify_mcp.run"
+}

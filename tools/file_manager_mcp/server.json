@@ -1,0 +1,92 @@
+{
+  "name": "file-manager-mcp",
+  "description": "MCP-style server for MVP Agent file operations: create markdown files, validate them, and bundle outputs into a ZIP archive.",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "create_file",
+      "description": "Create or overwrite a text file (typically under outputs/).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Path relative to project root, e.g. 'outputs/features.md'."
+          },
+          "content": {
+            "type": "string",
+            "description": "File contents to write."
+          }
+        },
+        "required": ["filename", "content"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "path": { "type": "string" },
+          "message": { "type": "string" }
+        },
+        "required": ["success", "path", "message"]
+      }
+    },
+    {
+      "name": "validate_markdown",
+      "description": "Validate a markdown file exists and is readable text.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "Path to markdown file, e.g. 'outputs/features.md'."
+          }
+        },
+        "required": ["filename"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "path": { "type": "string" },
+          "errors": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "message": { "type": "string" }
+        },
+        "required": ["success", "path", "errors", "message"]
+      }
+    },
+    {
+      "name": "zip_files",
+      "description": "Create a ZIP archive of generated MVP files (defaults to outputs/ → outputs/mvp_package.zip).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "source_dir": {
+            "type": "string",
+            "description": "Directory to zip, default 'outputs'."
+          },
+          "zip_path": {
+            "type": "string",
+            "description": "Target zip path, default 'outputs/mvp_package.zip'."
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "path": {
+            "type": ["string", "null"],
+            "description": "Path to created ZIP file if success."
+          },
+          "message": { "type": "string" }
+        },
+        "required": ["success", "path", "message"]
+      }
+    }
+  ],
+  "entrypoint": "python -m tools.file_manager_mcp.run"
+}
