@@ -15,6 +15,7 @@ from src.file_manager import get_file_manager
 from src.error_handler import get_error_handler, MVPAgentError, ErrorCategory
 from src.validators import validate_idea, sanitize_idea
 from src.mcp_process_manager import MCPManager
+from src.settings import SettingsManager, create_settings_ui
 
 # Explicitly load environment variables
 load_dotenv()
@@ -232,6 +233,7 @@ CUSTOM_CSS = """
 _agent = None
 _file_manager = None
 _mcp_manager: MCPManager | None = None
+_settings_manager: SettingsManager | None = None
 
 def get_mcp_manager() -> MCPManager:
     """
@@ -244,13 +246,23 @@ def get_mcp_manager() -> MCPManager:
         _mcp_manager = MCPManager()
     return _mcp_manager
 
+settings_mgr() -> SettingsManager:
+    """Get or create the settings manager instance"""
+    global _settings_manager
+    if _settings_manager is None:
+        _settings_manager = SettingsManager()
+    return _settings_manager
+
 
 def get_agent():
     """Get or create the agent instance"""
     global _agent
     if _agent is None:
-        api_key = os.getenv("GEMINI_API_KEY")
+        # Try to get API key from settings first, fallback to env var
+        settings_mgr = get_settings_mgr()
+        api_key = settings_mgr.get_api_key()
         if not api_key:
+            raise ValueError("GEMINI_API_KEY not found. Please add it in Settings tab o
             raise ValueError("GEMINI_API_KEY not found in environment variables. Please add it to your .env file.")
         _agent = create_agent(api_key)
     return _agent
@@ -465,96 +477,105 @@ def generate_mvp(idea: str, tech_preference: str = "", platform: str = "", const
         }
 
 # Create Gradio interface
+    
+    # Main tabs for app sections
+    with gr.Tabs() as main_tabs:
+        # ===== Generate Tab =====
+        with gr.Tab("🎯 Generate Blueprint", id="generate-tab"):
 with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent", theme=gr.themes.Base()) as demo:
     
     # Header
     # Try to start MCP servers before exposing full UI
     mcp_error_box = gr.Markdown(visible=False)
-
-    gr.Markdown("""
-    # MVP Agent
-    ### AI-powered MVP Blueprint Generator
-    """, elem_classes="header-title")
-    
-    # Input section
-    with gr.Row():
-        with gr.Column():
-            idea_input = gr.Textbox(
+        
+            # Input section
+            with gr.Row():
+                with gr.Column():
+                    idea_input = gr.Textbox(
+                        label="Your Startup Idea  (estimated time: 8-10 min)",
+                        placeholder="e.g., An AI-powered meal planning app that helps busy professionals eat healthier...",
+                        lines=4,
+                        elem_id="idea-input"
+                    idea_input = gr.Textbox(
                 label="Your Startup Idea  (estimated time: 8-10 min)",
                 placeholder="e.g., An AI-powered meal planning app that helps busy professionals eat healthier...",
                 lines=4,
                 elem_id="idea-input"
             )
+                    
+                    # Advanced Configuration
+                    with gr.Accordion("🛠️ Advanced Configuration (Optional)", open=False):
+                        with gr.Row():
+                            platform_input = gr.Dropdown(
+                                choices=["Web App", "Mobile App (iOS/Android)", "Cross-Platform", "Desktop", "CLI Tool", "API Service"],
+                                label="Target Platform",
+                                value="Web App",
+                                info="Where will your users interact with the product?"
+                            )
+                            tech_input = gr.Textbox(
+                                label="Preferred Tech Stack",
+                                placeholder="e.g. Next.js, Python/FastAPI, Flutter, No-Code...",
+                                info="Leave empty to let the AI decide"
+                            )
+                        constraint_input = gr.Textbox(
+                            label="Key Constraints",
+                            placeholder="e.g. Must be Open Source, Max $50/mo hosting, HIPAA compliant...",
+                            info="Any specific limitations or requirements?"
+                        )
+
+                    generate_btn = gr.Button(
+                        "🎯 Generate MVP Blueprint",
+                        variant="primary",
+                        elem_id="generate-btn"
+                    )
             
-            # Advanced Configuration
-            with gr.Accordion("🛠️ Advanced Configuration (Optional)", open=False):
+            # Status section
+            gr.Markdown("### 🤖 Agent Status - Mission Control")
+            with gr.Column():
                 with gr.Row():
-                    platform_input = gr.Dropdown(
-                        choices=["Web App", "Mobile App (iOS/Android)", "Cross-Platform", "Desktop", "CLI Tool", "API Service"],
-                        label="Target Platform",
-                        value="Web App",
-                        info="Where will your users interact with the product?"
-                    )
-                    tech_input = gr.Textbox(
-                        label="Preferred Tech Stack",
-                        placeholder="e.g. Next.js, Python/FastAPI, Flutter, No-Code...",
-                        info="Leave empty to let the AI decide"
-                    )
-                constraint_input = gr.Textbox(
-                    label="Key Constraints",
-                    placeholder="e.g. Must be Open Source, Max $50/mo hosting, HIPAA compliant...",
-                    info="Any specific limitations or requirements?"
-                )
-
-            generate_btn = gr.Button(
-                "🎯 Generate MVP Blueprint",
-                variant="primary",
-                elem_id="generate-btn"
+                    current_phase_display = gr.Markdown("⚡ Current Phase: Idle", elem_classes="status-metric")
+                    elapsed_time_display = gr.Markdown("⏱️ Elapsed Time: 0.0s", elem_classes="status-metric")
+                    tokens_used_display = gr.Markdown("🧠 Tokens Used: 0", elem_classes="status-metric")
+                activity_log_display = gr.HTML("<div id='log-container'>Ready to generate your MVP blueprint. Enter your idea above and click the button!</div>", elem_id="activity-log-display")
+            
+            # Download button (initially hidden)
+            zip_file = gr.File(
+                label=" Download All Files as ZIP",
+                visible=False,
+                elem_id="download-zip"
             )
-    
-    # Status section
-    gr.Markdown("### 🤖 Agent Status - Mission Control")
-    with gr.Column():
-        with gr.Row():
-            current_phase_display = gr.Markdown("⚡ Current Phase: Idle", elem_classes="status-metric")
-            elapsed_time_display = gr.Markdown("⏱️ Elapsed Time: 0.0s", elem_classes="status-metric")
-            tokens_used_display = gr.Markdown("🧠 Tokens Used: 0", elem_classes="status-metric")
-        activity_log_display = gr.HTML("<div id='log-container'>Ready to generate your MVP blueprint. Enter your idea above and click the button!</div>", elem_id="activity-log-display")
-    
-    # Download button (initially hidden)
-    zip_file = gr.File(
-        label=" Download All Files as ZIP",
-        visible=False,
-        elem_id="download-zip"
-    )
 
-    # Output tabs (initially hidden)
-    with gr.Tabs(visible=False) as output_tabs:
-        with gr.Tab("📝 Overview"):
-            overview_display = gr.Markdown("", elem_classes="markdown-body")
+            # Output tabs (initially hidden)
+            with gr.Tabs(visible=False) as output_tabs:
+                with gr.Tab("📝 Overview"):
+                    overview_display = gr.Markdown("", elem_classes="markdown-body")
 
-        with gr.Tab("📋 Features"):
-            features_display = gr.Markdown("", elem_classes="markdown-body")
+                with gr.Tab("📋 Features"):
+                    features_display = gr.Markdown("", elem_classes="markdown-body")
 
-        with gr.Tab("🏗️ Architecture"):
-            architecture_display = gr.Markdown("", elem_classes="markdown-body")
+                with gr.Tab("🏗️ Architecture"):
+                    architecture_display = gr.Markdown("", elem_classes="markdown-body")
 
-        with gr.Tab("🎨 Design"):
-            design_display = gr.Markdown("", elem_classes=["markdown-body"])
+                with gr.Tab("🎨 Design"):
+                    design_display = gr.Markdown("", elem_classes=["markdown-body"])
 
-        with gr.Tab("🗺️ User Flow"):
-            user_flow_display = gr.Markdown("", elem_classes="markdown-body")
+                with gr.Tab("🗺️ User Flow"):
+                    user_flow_display = gr.Markdown("", elem_classes="markdown-body")
 
-        with gr.Tab("📅 Roadmap"):
-            roadmap_display = gr.Markdown("", elem_classes="markdown-body")
+                with gr.Tab("📅 Roadmap"):
+                    roadmap_display = gr.Markdown("", elem_classes="markdown-body")
 
-        with gr.Tab("💼 Business Model"):
-            business_model_display = gr.Markdown("", elem_classes="markdown-body")
+                with gr.Tab("💼 Business Model"):
+                    business_model_display = gr.Markdown("", elem_classes="markdown-body")
 
-        with gr.Tab("🧪 Testing Plan"):
-            testing_plan_display = gr.Markdown("", elem_classes="markdown-body")
-    
-    # Footer
+                with gr.Tab("🧪 Testing Plan"):
+                    testing_plan_display = gr.Markdown("", elem_classes="markdown-body")
+        
+        # == (outside tabs, applies to all)
+    gr.Markdown("""
+    ---
+    **MVP Agent v2.0** | Production-Ready with BMAD Method  
+    Powered by Gemini API, LangChain/LangGraph, and MCP servers
     gr.Markdown("""
     ---
     **MCP 1st Birthday** | Track 2: MCP In Action (Agents)  
