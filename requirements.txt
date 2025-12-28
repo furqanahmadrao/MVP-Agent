@@ -1,11 +1,14 @@
-# MVP Agent - Python Dependencies
-# For MCP Hackathon 2025 - Track 2: MCP In Action (Agents)
+# MVP Agent v2.0 - Python Dependencies
+# Production-Ready Agent Framework with BMAD Method
 
 # Core Framework
 gradio==5.49.1
 
-# AI Models
+# AI Models & Agent Framework
 google-generativeai==0.8.3
+langchain==0.3.10
+langchain-google-genai==2.0.7
+langgraph==0.2.60
 
 # Environment Management
 python-dotenv==1.0.1
@@ -13,13 +16,18 @@ python-dotenv==1.0.1
 # Async HTTP Client
 aiohttp==3.10.5
 
-# Data Validation
+# Data Validation & Serialization
 pydantic==2.9.2
+pyyaml==6.0.1
 
 # Fast JSON
 orjson==3.10.7
 
-# MCP-style HTTP Servers
+# TOON Format (optional, for agent-first outputs)
+# Uncomment if using TOON encoding
+# toon-format==0.9.0
+
+# MCP-style HTTP Servers (legacy, will be removed in Phase 3)
 fastapi==0.115.6
 uvicorn[standard]==0.30.6
 requests==2.32.3

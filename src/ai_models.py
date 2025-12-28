@@ -1,13 +1,16 @@
 """
 AI Models Module - Gemini API Integration
 Handles all interactions with Google Gemini AI models
+Includes support for Gemini Search Grounding
 """
 
 import os
 import json
 import re
 import google.generativeai as genai
-from typing import Optional, Dict, Any
+from google import genai as genai_new  # New SDK for grounding
+from google.genai import types
+from typing import Optional, Dict, Any, List
 from enum import Enum
 
 
@@ -198,6 +201,117 @@ class GeminiClient:
             
         except Exception as e:
             raise Exception(f"Gemini API error: {str(e)}")
+    
+    def generate_with_grounding(
+        self,
+        prompt: str,
+        model_type: ModelType = ModelType.FLASH,
+        temperature: float = 0.3,
+        dynamic_threshold: Optional[float] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate response with Gemini Search Grounding.
+        
+        Args:
+            prompt: The prompt/query to send
+            model_type: Which model to use
+            temperature: Sampling temperature
+            dynamic_threshold: Dynamic retrieval threshold (0.0-1.0)
+        
+        Returns:
+            {
+                "answer": str,           # Generated answer
+                "chunks": List[Dict],    # Grounding chunks (sources)
+                "supports": List[Dict],  # Citation supports
+                "search_queries": List[str]  # Queries executed
+            }
+        """
+        try:
+            # Use new SDK for grounding
+            client_new = genai_new.Client(api_key=self.api_key)
+            
+            # Configure grounding tool
+            grounding_tool = types.Tool(google_search=types.GoogleSearch())
+            
+            config = types.GenerateContentConfig(
+                tools=[grounding_tool],
+                temperature=temperature,
+                response_modalities=["TEXT"]
+            )
+            
+            # Add dynamic threshold if specified
+            if dynamic_threshold is not None:
+                config.tool_config = types.ToolConfig(
+                    google_search_retrieval=types.GoogleSearchRetrievalConfig(
+                        dynamic_retrieval_config=types.DynamicRetrievalConfig(
+                            mode=types.DynamicRetrievalConfig.Mode.MODE_DYNAMIC,
+                            dynamic_threshold=dynamic_threshold
+                        )
+                    )
+                )
+            
+            # Generate with grounding
+            response = client_new.models.generate_content(
+                model=model_type.value,
+                contents=prompt,
+                config=config
+            )
+            
+            # Extract grounding metadata
+            grounding_metadata = None
+            if hasattr(response.candidates[0], 'grounding_metadata'):
+                grounding_metadata = response.candidates[0].grounding_metadata
+            
+            # Parse grounding chunks (sources)
+            chunks = []
+            if grounding_metadata and hasattr(grounding_metadata, 'grounding_chunks'):
+                for chunk in grounding_metadata.grounding_chunks:
+                    chunks.append({
+                        "title": getattr(chunk.web, 'title', 'Unknown'),
+                        "uri": getattr(chunk.web, 'uri', ''),
+                        "snippet": getattr(chunk.web, 'snippet', '')
+                    })
+            
+            # Parse grounding supports
+            supports = []
+            if grounding_metadata and hasattr(grounding_metadata, 'grounding_supports'):
+                for support in grounding_metadata.grounding_supports:
+                    supports.append({
+                        "segment": {
+                            "start_index": support.segment.start_index if hasattr(support, 'segment') else 0,
+                            "end_index": support.segment.end_index if hasattr(support, 'segment') else 0,
+                            "text": support.segment.text if hasattr(support, 'segment') else ""
+                        },
+                        "grounding_chunk_indices": support.grounding_chunk_indices if hasattr(support, 'grounding_chunk_indices') else [],
+                        "confidence_scores": support.confidence_scores if hasattr(support, 'confidence_scores') else []
+                    })
+            
+            # Extract search queries
+            search_queries = []
+            if grounding_metadata and hasattr(grounding_metadata, 'search_entry_point'):
+                search_queries = getattr(grounding_metadata.search_entry_point, 'rendered_content', '')
+            
+            # Track tokens
+            if hasattr(response, 'usage_metadata'):
+                self.total_tokens += response.usage_metadata.total_token_count
+            
+            return {
+                "answer": response.text,
+                "chunks": chunks,
+                "supports": supports,
+                "search_queries": [prompt] if not search_queries else search_queries,
+                "success": True
+            }
+            
+        except Exception as e:
+            return {
+                "answer": "",
+                "chunks": [],
+                "supports": [],
+                "search_queries": [prompt],
+                "success": False,
+                "error": str(e)
+            }
     
     def generate_json(
         self,

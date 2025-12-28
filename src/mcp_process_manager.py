@@ -41,16 +41,12 @@ class MCPManager:
     def __init__(self) -> None:
         python_exe = sys.executable or "python"
 
+        # NOTE: Google Search MCP removed in Phase 3 (replaced by Gemini Grounding)
         self.configs: List[MCPConfig] = [
             MCPConfig(
                 name="file-manager-mcp",
                 command=[python_exe, "-u", "tools/file_manager_mcp/run.py"],
                 url="http://127.0.0.1:8081",
-            ),
-            MCPConfig(
-                name="google-search-mcp",
-                command=[python_exe, "-u", "tools/google_search_mcp/run.py"],
-                url="http://127.0.0.1:8082",
             ),
             MCPConfig(
                 name="markdownify-mcp",
