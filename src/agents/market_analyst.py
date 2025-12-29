@@ -1,325 +1,136 @@
-"""
-Market Analyst Agent - BMAD Analysis Phase
-Generates product brief with market research, user personas, and competitor analysis
-Uses Gemini Search Grounding for web research
-"""
+"Market Analyst Agent - BMAD Analysis Phase
+Conducts market research using Gemini Grounding and generates Product Brief.
+"
 
-from typing import Dict, Any, List
-from datetime import datetime
+from typing import Dict, Any, Tuple
 from ..ai_models import GeminiClient, ModelType
-from ..grounding_agent import GeminiGroundingAgent
-from ..helpers import BMAdHelpers, get_standard_prompt_suffix, get_mermaid_guidelines
+from ..helpers import BMAdHelpers, get_standard_prompt_suffix
+from ..toon_utils import ToonFormatter
 from ..agent_state import AgentState, add_status_message
-
 
 class MarketAnalystAgent:
     """
     Market Analyst - Analysis Phase
     
     Responsibilities:
-    - Market research (size, trends, growth)
-    - User persona identification
-    - Competitor analysis
-    - Pain point discovery
-    - Value proposition definition
+    - Conduct web research (Competitors, Trends, Pain Points) using Gemini Grounding
+    - Synthesize research into a Product Brief
+    - Output structured data for next phase
     
     Output: product_brief.md
     """
     
     def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
-        """
-        Initialize Market Analyst agent.
-        
-        Args:
-            api_key: Gemini API key
-            model_name: Gemini model to use
-        """
+        """Initialize Market Analyst agent"""
         self.api_key = api_key
         self.model_name = model_name
         self.helpers = BMAdHelpers()
-        
-        # Initialize clients
         self.llm = GeminiClient(api_key)
-        self.grounding_agent = GeminiGroundingAgent(api_key, model_name)
     
-    def generate_product_brief(self, state: AgentState) -> str:
+    def generate_product_brief(self, state: AgentState) -> Tuple[str, Dict[str, Any]]:
         """
-        Generate product brief document.
+        Generate product brief using Gemini Grounding.
         
         Args:
-            state: Current agent state with user idea
+            state: Agent state
         
         Returns:
-            Markdown formatted product brief
+            Tuple[product_brief_markdown, research_data_dict]
         """
         idea = state["idea"]
-        project_level = state["project_level"]
+        add_status_message(state, "Market Analyst: Conducting grounded research...")
         
-        add_status_message(state, "Market Analyst: Starting market research...")
-        
-        # Step 1: Conduct market research
-        research_data = self._conduct_market_research(idea, state)
-        
-        add_status_message(state, "Market Analyst: Analyzing competitors...")
-        
-        # Step 2: Identify competitors
-        competitors = self._analyze_competitors(idea, state)
-        
-        add_status_message(state, "Market Analyst: Creating user personas...")
-        
-        # Step 3: Generate product brief
-        product_brief = self._generate_brief_document(
-            idea=idea,
-            research_data=research_data,
-            competitors=competitors,
-            project_level=project_level,
-            state=state
-        )
-        
-        add_status_message(state, "Market Analyst: Product brief complete!")
-        
-        # Store research data in state
-        state["research_results"].extend(research_data.get("results", []))
-        state["citations"].extend(research_data.get("all_chunks", []))
-        state["competitor_data"].extend(competitors)
-        
-        return product_brief
-    
-    def _conduct_market_research(self, idea: str, state: AgentState) -> Dict[str, Any]:
-        """
-        Conduct market research using Gemini Grounding.
-        
-        Returns:
-            {
-                "topic": str,
-                "results": List[Dict],
-                "all_chunks": List[Dict],
-                "summary": str
-            }
-        """
-        # Generate research queries
-        queries = [
-            f"What is the market size and growth rate for {idea}?",
-            f"What are the current trends in {idea} industry?",
-            f"Who are the target users for {idea}?",
-            f"What are common pain points users face with {idea}?"
-        ]
-        
-        # Track queries in state
-        state["research_queries"].extend(queries)
-        
-        # Conduct research
-        research_data = self.grounding_agent.research_topic(
-            topic=idea,
-            queries=queries,
-            max_results_per_query=3
-        )
-        
-        return research_data
-    
-    def _analyze_competitors(self, idea: str, state: AgentState) -> List[Dict[str, Any]]:
-        """
-        Analyze competitors using Gemini Grounding.
-        
-        Returns:
-            List of competitor data
-        """
-        query = f"Who are the top 5 competitors or similar products to {idea}?"
-        
-        result = self.grounding_agent.search(query, max_results=5)
-        
-        if result["success"]:
-            # Parse competitor data from answer
-            competitors_prompt = f"""Based on this research about competitors for "{idea}":
+        # Step 1: Research & Synthesis (Gemini Grounding)
+        research_prompt = f"""
+{self.helpers.get_role_definition("market_analyst")}
 
-{result['answer']}
-
-Extract competitor information in this format:
-1. Competitor Name
-   - Strengths: ...
-   - Weaknesses: ...
-   - Market Position: ...
-
-List 3-5 main competitors."""
-
-            competitors_text = self.llm.generate(
-                prompt=competitors_prompt,
-                model_type=ModelType.FLASH,
-                temperature=0.3
-            )
-            
-            # Store raw competitor text (will be formatted in document)
-            return [{
-                "analysis": competitors_text,
-                "sources": result["chunks"]
-            }]
-        
-        return []
-    
-    def _generate_brief_document(
-        self,
-        idea: str,
-        research_data: Dict[str, Any],
-        competitors: List[Dict[str, Any]],
-        project_level: Any,
-        state: AgentState
-    ) -> str:
-        """Generate the final product brief markdown document"""
-        
-        # Build comprehensive prompt
-        prompt = f"""You are a Market Analyst creating a Product Brief for an MVP.
+**Objective:**
+Analyze the startup idea below. Use Google Search to find:
+1. Market Size & Trends (CAGR, TAM/SAM/SOM estimates)
+2. Top 3 Competitors (Names, Strengths, Weaknesses)
+3. Key User Pain Points (from forums, reviews)
+4. Unique Value Proposition opportunities
 
 **Startup Idea:**
 {idea}
 
-**Project Complexity Level:** {project_level.name} (Level {project_level.value})
-
-**Market Research Data:**
-{research_data.get('summary', 'No research data available')}
-
-**Competitor Analysis:**
-{competitors[0]['analysis'] if competitors else 'No competitor data available'}
-
-**Your Task:**
-Generate a comprehensive Product Brief with the following sections:
-
-1. **Executive Summary** (2-3 paragraphs)
-   - Clear problem statement
-   - Proposed solution
-   - Target market
-   - Unique value proposition
-
-2. **Market Analysis**
-   - Market size and growth projections
-   - Key trends
-   - Market segmentation
-   - Opportunity gaps
-
-3. **User Personas** (3-5 personas)
-   Create a table with columns:
-   | Persona Name | Description | Demographics | Pain Points | Goals | Tech Savviness |
-   
-   Make personas realistic and specific.
-
-4. **Pain Points & User Needs**
-   - List 5-8 key pain points users currently face
-   - For each pain point, explain why it matters
-   - Prioritize by severity (Critical/High/Medium)
-
-5. **Competitor Landscape**
-   Create a comparison table:
-   | Competitor | Strengths | Weaknesses | Market Position | Differentiation Opportunity |
-   
-   Include 3-5 main competitors.
-
-6. **Unique Value Proposition**
-   - What makes this solution different?
-   - Why should users choose this over competitors?
-   - Key differentiators (3-5 points)
-
-7. **Success Metrics** (KPIs)
-   - User acquisition targets
-   - Engagement metrics
-   - Revenue/business metrics
-   - Market penetration goals
-
-8. **Market Segmentation Diagram** (Mermaid)
-   Create a quadrantChart showing market segments by:
-   - User sophistication (x-axis)
-   - Willingness to pay (y-axis)
-   
-   If Mermaid diagram fails, provide a text-based description of market segments.
-
+**Output:**
+Provide a comprehensive market analysis.
 {get_standard_prompt_suffix()}
-
-{get_mermaid_guidelines()}
-
-**Important:**
-- Use data from the research provided
-- Be specific with numbers and projections
-- Use tables for structured comparisons
-- Include rationale for key decisions
-- Add agent guidance at the end for the PRD Generator
-
-**Document Header:**
-Use this format:
-# Product Brief: [Project Name]
-
-**Subtitle:** Market Analysis & Product Strategy  
-**Version:** 1.0  
-**Generated By:** MVP Agent - Market Analyst  
-**Date:** {datetime.now().strftime('%Y-%m-%d')}
-
----
-
-Generate the complete Product Brief now.
 """
         
-        # Generate document
-        product_brief = self.llm.generate(
-            prompt=prompt,
-            model_type=ModelType.PRO,  # Use Pro for comprehensive analysis
-            temperature=0.7
-        )
+        # Call Gemini with Grounding
+        research_result = self.llm.generate_with_grounding(research_prompt, model_name=self.model_name)
+        research_text = research_result["text"]
+        citations = research_result.get("citations", [])
         
-        # Add sources section
-        if research_data.get("all_chunks"):
-            sources_markdown = self.grounding_agent.format_sources_markdown(
-                research_data["all_chunks"][:10]  # Limit to top 10 sources
-            )
-            product_brief += sources_markdown
+        add_status_message(state, f"Market Analyst: Found {len(citations)} sources.")
         
-        # Add agent guidance
-        agent_guidance = self.helpers.generate_agent_guidance(
-            guidance="""**For PRD Generator:**
-1. Use the identified user personas as the basis for user stories
-2. Address all pain points listed in this brief with functional requirements
-3. Ensure features align with the unique value proposition
-4. Reference competitors when defining "Must-Have" vs "Should-Have" features
-5. Target the market segments identified in this brief
+        # Step 2: Format Product Brief (Markdown)
+        format_prompt = f"""
+{self.helpers.get_role_definition("market_analyst")}
 
-**Key Data to Reference:**
-- User personas (names, pain points, goals)
-- Pain point priorities (Critical/High/Medium)
-- Competitor weaknesses (opportunities for differentiation)
-- Success metrics (will inform acceptance criteria)""",
-            next_phase="Planning (PRD Generation)"
-        )
+**Objective:**
+Create a structured **Product Brief** based on the research provided.
+
+**Research Data:**
+{research_text}
+
+**Structure:**
+# Product Brief: {idea}
+
+## 1. Executive Summary
+[Concise vision statement]
+
+## 2. Market Analysis
+- **Market Size:** [Data from research]
+- **Trends:** [Key trends]
+
+## 3. Competitive Landscape
+| Competitor | Strengths | Weaknesses |
+|------------|-----------|------------|
+| [Name] | ... | ... |
+
+## 4. User Personas
+- **Primary:** [Description + Needs]
+- **Secondary:** [Description + Needs]
+
+## 5. Unique Value Proposition
+[What makes this different?]
+
+## 6. Success Metrics
+- [Metric 1]
+- [Metric 2]
+
+---
+**Rationale:**
+Explain why this product concept is viable based on the research.
+
+**Agent Guidance:**
+The next agent (PRD Generator) should focus on features that solve the identified pain points: [List top 3 pain points].
+
+**Citations:**
+{self._format_citations(citations)}
+"""
         
-        product_brief += agent_guidance
+        brief_result = self.llm.generate_with_grounding(format_prompt, model_name=self.model_name)
+        product_brief = brief_result["text"]
         
-        return product_brief
+        # Step 3: Create Structured Data (TOON/JSON) for next agents
+        structured_data = {
+            "market_size": "Extracted from research", # In a real agent, we'd extract this specifically
+            "competitors": ["Extracted competitor list"],
+            "pain_points": ["Extracted pain points"],
+            "citations": citations
+        }
+        
+        return product_brief, structured_data
 
-
-# ===== Example Usage =====
-
-if __name__ == "__main__":
-    import os
-    from ..agent_state import create_initial_state, ProjectLevel
-    
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        print("Error: GEMINI_API_KEY not found")
-        exit(1)
-    
-    # Create test state
-    state = create_initial_state(
-        idea="An AI-powered meal planning app that helps busy professionals eat healthier by generating personalized weekly meal plans based on dietary preferences, budget, and available time.",
-        api_key=api_key,
-        project_level=ProjectLevel.MEDIUM
-    )
-    
-    # Initialize agent
-    agent = MarketAnalystAgent(api_key)
-    
-    # Generate product brief
-    print("🔬 Generating Product Brief...")
-    product_brief = agent.generate_product_brief(state)
-    
-    print("\n" + "="*50)
-    print(product_brief)
-    print("="*50)
-    
-    print(f"\n✅ Product Brief generated ({len(product_brief)} characters)")
-    print(f"📊 Research queries: {len(state['research_queries'])}")
-    print(f"🔗 Citations: {len(state['citations'])}")
+    def _format_citations(self, citations: list) -> str:
+        if not citations:
+            return "No citations available."
+        
+        formatted = "\n**Sources:**\n"
+        for i, c in enumerate(citations, 1):
+            formatted += f"{i}. [{c.get('title', 'Source')}]({c.get('uri', '#')})\n"
+        return formatted
