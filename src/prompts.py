@@ -1186,4 +1186,18 @@ def get_system_prompt(role: str) -> str:
     Returns:
         System prompt string
     """
+    return SYSTEM_PROMPTS.get(role, "")
+
+
+def get_standard_prompt_suffix() -> str:
+    """Get standard suffix for all prompts"""
+    return """
+
+**Quality Standards:**
+- Be specific and quantified (use exact numbers, versions, metrics)
+- Cite sources and provide evidence
+- Address multiple perspectives (user, business, technical)
+- Include edge cases and fallback strategies
+- Use structured markdown (tables, lists, clear headers)
+"""
     return SYSTEM_PROMPTS.get(role, SYSTEM_PROMPTS["mvp_architect"])

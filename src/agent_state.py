@@ -47,11 +47,13 @@ class AgentState(TypedDict):
     # Generated Artifacts (The "Files")
     # Phase 1: Analysis
     product_brief: str  # Market Analyst output
-    business_model: str # Business Model Designer output
+    business_model: str # Financial Modeler output
     
     # Phase 2: Planning
     prd: str            # PRD Generator output (GitHub Spec Kit)
     tech_spec: str      # Technical Plan
+    feature_prioritization: str  # RICE scoring, MoSCoW prioritization
+    competitive_analysis: str    # Competitor feature comparison
     
     # Phase 3: Solutioning
     architecture: str   # Architecture Designer output
@@ -96,6 +98,8 @@ def create_initial_state(idea: str, api_key: str, model_name: str = "gemini-2.5-
         "business_model": "",
         "prd": "",
         "tech_spec": "",
+        "feature_prioritization": "",
+        "competitive_analysis": "",
         "architecture": "",
         "design_system": "",
         "user_flow": "",

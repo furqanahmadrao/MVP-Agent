@@ -23,7 +23,7 @@ from .agents.prd_generator import PRDGeneratorAgent
 from .agents.architect import ArchitectureDesignerAgent
 from .agents.ux_designer import UXFlowDesignerAgent
 from .agents.sprint_planner import SprintPlannerAgent
-# from .agents.business_model import BusinessModelAgent
+from .agents.financial_modeler import FinancialModelerAgent
 
 class MVPAgentWorkflow:
     """
@@ -89,8 +89,10 @@ class MVPAgentWorkflow:
             add_status_message(state, "  → Generating product brief...")
             state["product_brief"], state["research_data"] = analyst.generate_product_brief(state)
             
-            # Placeholder for Business Model Agent
-            state["business_model"] = "# Business Model\n\n(Pending implementation of BusinessModelAgent)"
+            # Financial Modeling
+            add_status_message(state, "  → Generating financial model...")
+            financial_modeler = FinancialModelerAgent(state["api_key"], state["model_name"])
+            state["business_model"] = financial_modeler.generate_financial_model(state, state["product_brief"])
             
             state["progress_percentage"] = 25
             add_status_message(state, "✅ Analysis Phase complete")
@@ -113,6 +115,12 @@ class MVPAgentWorkflow:
             
             add_status_message(state, "  → Generating Tech Spec...")
             state["tech_spec"] = prd_gen.generate_tech_spec(state)
+            
+            add_status_message(state, "  → Generating Feature Prioritization...")
+            state["feature_prioritization"] = prd_gen.generate_feature_prioritization(state)
+            
+            add_status_message(state, "  → Generating Competitive Analysis...")
+            state["competitive_analysis"] = prd_gen.generate_competitive_analysis(state)
             
             state["progress_percentage"] = 50
             add_status_message(state, "✅ Planning Phase complete")
