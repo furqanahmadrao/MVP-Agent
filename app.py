@@ -151,8 +151,8 @@ def run_generation(idea: str, project_level: int):
     state_mgr = get_state_manager()
     session_id = state_mgr.create_session(idea)
     
-    # Initialize workflow
-    workflow = create_workflow(api_key=api_key)
+    # Initialize workflow with session_id for real-time updates
+    workflow = create_workflow(api_key=api_key, session_id=session_id)
     
     # State container for the thread
     thread_state = {"done": False, "final_state": None, "error": None, "session_id": session_id}
