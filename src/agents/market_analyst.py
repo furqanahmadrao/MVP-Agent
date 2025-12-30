@@ -1,6 +1,6 @@
-"Market Analyst Agent - BMAD Analysis Phase
+"""Market Analyst Agent - BMAD Analysis Phase
 Conducts market research using Gemini Grounding and generates Product Brief.
-"
+"""
 
 from typing import Dict, Any, Tuple
 from ..ai_models import GeminiClient, ModelType
