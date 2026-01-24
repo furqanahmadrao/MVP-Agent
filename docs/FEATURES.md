@@ -1,4 +1,3 @@
-# Features
 
 The MVP Agent is packed with features designed to streamline the process of creating Product Requirements Documents (PRDs) and technical specifications.
 

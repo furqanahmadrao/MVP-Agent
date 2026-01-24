@@ -1,4 +1,3 @@
-# Troubleshooting
 
 This guide provides solutions to common problems that you may encounter while using the MVP Agent.
 

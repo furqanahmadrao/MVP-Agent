@@ -1,4 +1,3 @@
-# Introduction
 
 MVP Agent v2.0 is a sophisticated multi-agent system designed to transform simple startup ideas into professional Product Requirements Documents (PRDs) and technical specifications. It leverages the power of AI to automate the process of market research, product planning, and technical design, enabling entrepreneurs and product managers to quickly and efficiently create a comprehensive blueprint for their projects.
 

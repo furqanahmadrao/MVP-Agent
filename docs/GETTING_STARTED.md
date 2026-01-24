@@ -1,4 +1,3 @@
-# Getting Started
 
 This guide will help you get the MVP Agent up and running in just a few minutes.
 
@@ -10,20 +9,20 @@ This guide will help you get the MVP Agent up and running in just a few minutes.
 ## Installation
 
 1. **Clone the Repository:**
-   ```bash
+   `bash
    git clone https://github.com/furqanahmadrao/MVP-Agent.git
    cd MVP-Agent
-   ```
+   `
 
 2. **Build the Docker Image:**
-   ```bash
+   `bash
    docker build -t mvp-agent .
-   ```
+   `
 
 3. **Run the Docker Container:**
-   ```bash
+   `bash
    docker run -p 7860:7860 mvp-agent
-   ```
+   `
 
 ## Usage
 

@@ -1,4 +1,3 @@
-# FAQ
 
 ### What is the MVP Agent?
 

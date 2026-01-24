@@ -1,4 +1,3 @@
-# Architecture
 
 The MVP Agent is built on a sophisticated multi-agent architecture that leverages the power of LangGraph to orchestrate a team of specialized AI agents. This architecture is designed to be modular, scalable, and efficient, ensuring that the generated documents are of the highest quality.
 
@@ -26,8 +25,7 @@ The MVP Agent is composed of a team of specialized AI agents, each with a specif
 -   **Sprint Planner:** Generates Gantt charts, testing strategies, and deployment guides to ensure that the project is delivered on time and on budget.
 
 ## System Diagram
-
-```mermaid
+` + "```" + `mermaid
 graph LR
     User[User Idea] --> Analyst[Market Analyst]
     Analyst --> PRD[PRD Generator]
@@ -35,4 +33,4 @@ graph LR
     Architect --> UX[UX Designer]
     UX --> Planner[Sprint Planner]
     Planner --> Output[Final Blueprint]
-```
+` + "```" + `

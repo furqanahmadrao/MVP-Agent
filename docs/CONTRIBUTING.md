@@ -1,4 +1,3 @@
-# Contributing
 
 We welcome contributions to the MVP Agent! Please see `FEATURE_SUGGESTIONS.md` for our roadmap.
 

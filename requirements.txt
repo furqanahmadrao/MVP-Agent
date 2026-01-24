@@ -8,3 +8,15 @@ toon-format>=0.9.0b1
 pydantic>=2.9.2
 aiohttp
 orjson
+
+mkdocs
+mkdocs-material
+
+mkdocs
+mkdocs-material
+
+mkdocs
+mkdocs-material
+
+mkdocs
+mkdocs-material

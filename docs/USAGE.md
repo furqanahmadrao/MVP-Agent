@@ -1,4 +1,3 @@
-# Usage
 
 This guide will walk you through the process of using the MVP Agent to generate a comprehensive blueprint for your startup idea.
 
