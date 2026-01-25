@@ -3,7 +3,6 @@
 
 # Development/planning docs (not needed in production)
 AGENTS.md
-docs/
 .kiro/
 
 # Python cache and compiled files
@@ -44,3 +43,11 @@ tests/
 .pytest_cache/
 .coverage
 htmlcov/
+
+site/
+
+site/
+
+site/
+
+site/
