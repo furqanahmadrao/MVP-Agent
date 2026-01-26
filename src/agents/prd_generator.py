@@ -3,6 +3,7 @@ PRD Generator Agent - BMAD Planning Phase
 Generates PRD and Tech Spec using GitHub Spec Kit structure.
 """
 
+import re
 from typing import Dict, Any, Tuple, List
 from ..ai_models import GeminiClient, ModelType
 from ..helpers import BMAdHelpers, get_standard_prompt_suffix
@@ -95,10 +96,68 @@ Next step is Architecture. Ensure all NFRs are feasible with standard web techno
         result = self.llm.generate_with_grounding(prompt, model_name=self.model_name)
         prd = result["text"]
         
-        # In a full implementation, we would extract requirements into a structured list
-        requirements = [{"id": "FR-001", "title": "Placeholder Requirement"}]
+        # Extract requirements into a structured list
+        requirements = self._parse_requirements(prd)
         
         return prd, requirements
+
+    def _parse_requirements(self, prd_text: str) -> List[Dict[str, Any]]:
+        """
+        Parse PRD markdown to extract structured requirements.
+        """
+        requirements = []
+        lines = prd_text.split('\n')
+        current_req = {}
+        capturing_ac = False
+
+        for line in lines:
+            line = line.strip()
+
+            # Check for new Requirement Header (e.g., ### FR-001: Title)
+            fr_match = re.match(r'^###\s+(FR-\d+):\s+(.+)$', line)
+            if fr_match:
+                if current_req:
+                    requirements.append(current_req)
+
+                current_req = {
+                    "id": fr_match.group(1),
+                    "title": fr_match.group(2),
+                    "description": "",
+                    "user_story": "",
+                    "acceptance_criteria": [],
+                    "priority": ""
+                }
+                capturing_ac = False
+                continue
+
+            if not current_req:
+                continue
+
+            # Parse fields within a requirement
+            if line.startswith("**Description:**"):
+                current_req["description"] = line.replace("**Description:**", "").strip()
+                capturing_ac = False
+            elif line.startswith("**User Story:**"):
+                current_req["user_story"] = line.replace("**User Story:**", "").strip()
+                capturing_ac = False
+            elif line.startswith("**Priority:**"):
+                current_req["priority"] = line.replace("**Priority:**", "").strip()
+                capturing_ac = False
+            elif line.startswith("**Acceptance Criteria:**"):
+                capturing_ac = True
+            elif capturing_ac and line.startswith("- [ ]"):
+                criteria = line.replace("- [ ]", "").strip()
+                current_req["acceptance_criteria"].append(criteria)
+            elif line.startswith("## ") and current_req:
+                # New section, save and reset
+                requirements.append(current_req)
+                current_req = {}
+                capturing_ac = False
+
+        if current_req:
+            requirements.append(current_req)
+
+        return requirements
 
     def generate_tech_spec(self, state: AgentState) -> str:
         """
