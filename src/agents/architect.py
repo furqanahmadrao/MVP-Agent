@@ -6,7 +6,7 @@ Generates system architecture, tech stack, database schema, and NFR coverage
 from typing import Dict, Any
 from datetime import datetime
 from ..ai_models import GeminiClient, ModelType
-from ..helpers import BMAdHelpers, get_standard_prompt_suffix, get_mermaid_guidelines
+from ..helpers import BMAdHelpers, get_standard_prompt_suffix
 from ..agent_state import AgentState, add_status_message
 
 class ArchitectureDesignerAgent:
