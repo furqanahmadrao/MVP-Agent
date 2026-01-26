@@ -1,4 +1,4 @@
-name: CodeRabbit-Style Automatic Code Review with Multi-Comments
+name: OpenCode Review
 
 on:
   pull_request:
