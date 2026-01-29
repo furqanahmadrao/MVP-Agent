@@ -1,0 +1,15 @@
+theme:
+  name: material
+nav:
+  - 'index.md': 'README.md'
+  - 'Introduction': 'INTRODUCTION.md'
+  - 'Getting Started': 'GETTING_STARTED.md'
+  - 'Installation': 'INSTALLATION.md'
+  - 'Usage': 'USAGE.md'
+  - 'Features': 'FEATURES.md'
+  - 'Architecture': 'ARCHITECTURE.md'
+  - 'Configuration': 'CONFIGURATION.md'
+  - 'Contributing': 'CONTRIBUTING.md'
+  - 'Troubleshooting': 'TROUBLESHOOTING.md'
+  - 'FAQ': 'FAQ.md'
+  - 'Deployment': 'DEPLOYMENT.md'
