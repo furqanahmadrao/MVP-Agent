@@ -23,7 +23,7 @@ from .agents.prd_generator import PRDGeneratorAgent
 from .agents.architect import ArchitectureDesignerAgent
 from .agents.ux_designer import UXFlowDesignerAgent
 from .agents.sprint_planner import SprintPlannerAgent
-# from .agents.business_model import BusinessModelAgent
+from .agents.financial_modeler import FinancialModelerAgent
 
 class MVPAgentWorkflow:
     """
@@ -115,11 +115,19 @@ class MVPAgentWorkflow:
             self._update_progress(20, "Analysis", "  → Generating product brief...")
             state["product_brief"], state["research_data"] = analyst.generate_product_brief(state)
             
-            # Update state manager with the generated file
+            # Update state manager with the generated product brief
             self._update_state_manager("product_brief.md", state["product_brief"])
-            
-            # Placeholder for Business Model Agent
-            state["business_model"] = "# Business Model\n\n(Pending implementation of BusinessModelAgent)"
+
+            # Financial Modeling (best-effort; fall back to placeholder on failure)
+            try:
+                add_status_message(state, "  → Generating financial model...")
+                financial_modeler = FinancialModelerAgent(state["api_key"], state["model_name"])
+                state["business_model"] = financial_modeler.generate_financial_model(state, state["product_brief"])
+            except Exception as e:
+                add_status_message(state, f"⚠️ Financial modeling failed: {e}")
+                state["business_model"] = "# Business Model\n\n(Pending implementation of BusinessModelAgent)"
+
+            # Update state manager with the generated business model
             self._update_state_manager("business_model.md", state["business_model"])
             
             state["progress_percentage"] = 25
@@ -149,6 +157,12 @@ class MVPAgentWorkflow:
             self._update_progress(45, "Planning", "  → Generating Tech Spec...")
             state["tech_spec"] = prd_gen.generate_tech_spec(state)
             self._update_state_manager("tech_spec.md", state["tech_spec"])
+            
+            add_status_message(state, "  → Generating Feature Prioritization...")
+            state["feature_prioritization"] = prd_gen.generate_feature_prioritization(state)
+            
+            add_status_message(state, "  → Generating Competitive Analysis...")
+            state["competitive_analysis"] = prd_gen.generate_competitive_analysis(state)
             
             state["progress_percentage"] = 50
             add_status_message(state, "✅ Planning Phase complete")

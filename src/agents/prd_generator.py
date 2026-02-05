@@ -1,6 +1,7 @@
 """
 PRD Generator Agent - BMAD Planning Phase
 Generates PRD and Tech Spec using GitHub Spec Kit structure.
+Enhanced with RICE prioritization and competitive analysis.
 """
 
 import re
@@ -8,6 +9,7 @@ from typing import Dict, Any, Tuple, List
 from ..ai_models import GeminiClient, ModelType
 from ..helpers import BMAdHelpers, get_standard_prompt_suffix
 from ..agent_state import AgentState, add_status_message
+from ..enhanced_prompts import EnhancedPromptTemplates
 
 class PRDGeneratorAgent:
     """
@@ -16,10 +18,11 @@ class PRDGeneratorAgent:
     Responsibilities:
     - Translate Product Brief into Functional/Non-Functional Requirements
     - Define User Stories and Acceptance Criteria (Spec Kit style)
-    - Prioritize features (MoSCoW)
+    - Prioritize features (MoSCoW + RICE scoring)
+    - Generate competitive feature comparison
     - Generate Technical Specification
     
-    Output: prd.md, tech_spec.md
+    Output: prd.md, tech_spec.md, feature_prioritization.md, competitive_analysis.md
     """
     
     def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
@@ -28,6 +31,7 @@ class PRDGeneratorAgent:
         self.model_name = model_name
         self.helpers = BMAdHelpers()
         self.llm = GeminiClient(api_key)
+        self.enhanced_prompts = EnhancedPromptTemplates()
     
     def generate_prd(self, state: AgentState) -> Tuple[str, List[Dict[str, Any]]]:
         """
@@ -200,6 +204,61 @@ Focus on "HOW" the requirements will be met.
 **Agent Guidance:**
 The Architect agent will use this to design the detailed system architecture.
 """
+        
+        result = self.llm.generate_with_grounding(prompt, model_name=self.model_name)
+        return result["text"]
+    
+    def generate_feature_prioritization(self, state: AgentState) -> str:
+        """
+        Generate feature prioritization matrix with RICE scoring.
+        
+        Args:
+            state: Agent state with PRD
+        
+        Returns:
+            feature_prioritization_markdown
+        """
+        idea = state["idea"]
+        prd = state.get("prd", "")
+        research = str(state.get("research_data", {}))
+        
+        add_status_message(state, "PRD Generator: Creating feature prioritization matrix...")
+        
+        # Extract features from PRD (simplified - in production, parse more carefully)
+        features = prd[:3000] if prd else "Features will be defined in PRD"
+        
+        prompt = self.enhanced_prompts.format_feature_prioritization(
+            idea=idea,
+            features=features,
+            research=research
+        )
+        
+        result = self.llm.generate_with_grounding(prompt, model_name=self.model_name)
+        return result["text"]
+    
+    def generate_competitive_analysis(self, state: AgentState) -> str:
+        """
+        Generate competitive feature comparison matrix.
+        
+        Args:
+            state: Agent state with PRD and research
+        
+        Returns:
+            competitive_analysis_markdown
+        """
+        idea = state["idea"]
+        prd = state.get("prd", "")
+        research = str(state.get("research_data", {}))
+        
+        add_status_message(state, "PRD Generator: Creating competitive analysis...")
+        
+        features = prd[:3000] if prd else "Features will be defined in PRD"
+        
+        prompt = self.enhanced_prompts.format_competitive_analysis(
+            idea=idea,
+            features=features,
+            research=research
+        )
         
         result = self.llm.generate_with_grounding(prompt, model_name=self.model_name)
         return result["text"]
