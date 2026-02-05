@@ -874,36 +874,60 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0 - BMAD Edition", theme=gr.t
             with gr.Row():
                 # Sidebar with organized file tree
                 with gr.Column(scale=1, min_width=250, elem_classes="sidebar-container"):
-                    gr.Markdown("#### 📁 Phase 1: Analysis")
                     gr.Markdown("""
-                    <div style="padding-left: 10px;">
+                    <div style="background: linear-gradient(135deg, rgba(74, 144, 226, 0.2), rgba(74, 144, 226, 0.05));
+                                padding: 8px 12px; border-radius: 6px; margin-bottom: 8px;
+                                border-left: 3px solid #4A90E2;">
+                        <strong style="color: #4A90E2;">📁 Phase 1: Analysis</strong>
+                    </div>
+                    """)
+                    gr.Markdown("""
+                    <div style="padding-left: 10px; margin-bottom: 15px;">
                     📄 product_brief.md <span class="file-badge badge-analysis">Research</span><br>
                     💰 financial_model.md <span class="file-badge badge-analysis">Finance</span>
                     </div>
                     """)
-                    
-                    gr.Markdown("#### 📁 Phase 2: Planning")
+
                     gr.Markdown("""
-                    <div style="padding-left: 10px;">
+                    <div style="background: linear-gradient(135deg, rgba(137, 209, 133, 0.2), rgba(137, 209, 133, 0.05));
+                                padding: 8px 12px; border-radius: 6px; margin-bottom: 8px;
+                                border-left: 3px solid #89d185;">
+                        <strong style="color: #89d185;">📁 Phase 2: Planning</strong>
+                    </div>
+                    """)
+                    gr.Markdown("""
+                    <div style="padding-left: 10px; margin-bottom: 15px;">
                     📋 prd.md <span class="file-badge badge-planning">Core</span><br>
                     🛠️ tech_spec.md <span class="file-badge badge-planning">Tech</span><br>
                     ⭐ feature_prioritization.md <span class="file-badge badge-planning">Priority</span><br>
                     🏆 competitive_analysis.md <span class="file-badge badge-planning">Market</span>
                     </div>
                     """)
-                    
-                    gr.Markdown("#### 📁 Phase 3: Solution")
+
                     gr.Markdown("""
-                    <div style="padding-left: 10px;">
+                    <div style="background: linear-gradient(135deg, rgba(229, 192, 123, 0.2), rgba(229, 192, 123, 0.05));
+                                padding: 8px 12px; border-radius: 6px; margin-bottom: 8px;
+                                border-left: 3px solid #e5c07b;">
+                        <strong style="color: #e5c07b;">📁 Phase 3: Solution</strong>
+                    </div>
+                    """)
+                    gr.Markdown("""
+                    <div style="padding-left: 10px; margin-bottom: 15px;">
                     🏗️ architecture.md <span class="file-badge badge-solution">System</span><br>
                     👤 user_flow.md <span class="file-badge badge-solution">UX</span><br>
                     🎨 design_system.md <span class="file-badge badge-solution">Design</span>
                     </div>
                     """)
-                    
-                    gr.Markdown("#### 📁 Phase 4: Implementation")
+
                     gr.Markdown("""
-                    <div style="padding-left: 10px;">
+                    <div style="background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 107, 53, 0.05));
+                                padding: 8px 12px; border-radius: 6px; margin-bottom: 8px;
+                                border-left: 3px solid #FF6B35;">
+                        <strong style="color: #FF6B35;">📁 Phase 4: Implementation</strong>
+                    </div>
+                    """)
+                    gr.Markdown("""
+                    <div style="padding-left: 10px; margin-bottom: 15px;">
                     📅 roadmap.md <span class="file-badge badge-implementation">Sprint</span><br>
                     ✅ testing_plan.md <span class="file-badge badge-implementation">QA</span><br>
                     🚀 deployment_guide.md <span class="file-badge badge-implementation">DevOps</span>
