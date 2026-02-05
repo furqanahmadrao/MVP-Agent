@@ -607,30 +607,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0 - BMAD Edition", theme=gr.t
                         lines=25
                     )
 
-<<<<<<< HEAD
-        # === Generator Tab ===
-        with gr.Tab("⚡ Generator", id="generator-tab"):
-            with gr.Row():
-                with gr.Column(scale=2):
-                    idea_input = gr.Textbox(
-                        label="What do you want to build?",
-                        placeholder="Describe your startup idea...",
-                        lines=5
-                    )
-                    with gr.Accordion("Advanced Options", open=False):
-                        project_level = gr.Slider(minimum=0, maximum=4, step=1, value=2, label="Project Complexity (Level)")
-                    
-                    generate_btn = gr.Button("🚀 Generate Blueprint", variant="primary", elem_id="generate-btn")
-                    
-                    # Editor page link (shows after generation starts)
-                    editor_link = gr.HTML("")
-                
-                with gr.Column(scale=1):
-                    gr.Markdown("### 📟 Mission Control")
-                    status_html = gr.HTML(elem_id="terminal-log")
 
-=======
->>>>>>> copilot/improve-agent-ui-features
         # === Settings Tab ===
         with gr.Tab("⚙️ Settings"):
             gr.Markdown("""
