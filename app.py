@@ -20,53 +20,79 @@ from src.editor_page import create_editor_interface
 # Load environment variables
 load_dotenv()
 
-# Custom CSS for modern "Code Editor" look - Enhanced version
+# Custom CSS for modern "Code Editor" look - Enhanced version with improved UX
 CUSTOM_CSS = """
 :root {
     --primary-orange: #FF6B35;
+    --primary-orange-hover: #ff8555;
     --secondary-blue: #4A90E2;
-    --dark-bg: #1e1e1e;
+    --dark-bg: #1a1a1a;
     --editor-bg: #1e1e1e;
     --sidebar-bg: #252526;
+    --card-bg: #2a2d2e;
     --text-white: #ffffff;
     --text-gray: #cccccc;
+    --text-muted: #808080;
     --border-color: #3e3e42;
     --success-green: #89d185;
-    --warning-yellow: #cca700;
+    --warning-yellow: #e5c07b;
     --error-red: #f48771;
+    --info-blue: #61afef;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+* {
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .gradio-container {
     background-color: var(--dark-bg) !important;
     color: var(--text-white) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* Header styling */
+/* Header styling with animated gradient */
 .header-container {
-    background: linear-gradient(135deg, var(--primary-orange), var(--secondary-blue));
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
+    background: linear-gradient(135deg, var(--primary-orange), var(--secondary-blue), #9b59b6);
+    background-size: 200% 200%;
+    animation: gradientShift 10s ease infinite;
+    padding: 25px 30px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .header-container h1 {
     color: white;
-    font-weight: bold;
+    font-weight: 700;
     margin: 0;
+    font-size: 2em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .header-container p {
-    color: rgba(255, 255, 255, 0.9);
-    margin-top: 5px;
+    color: rgba(255, 255, 255, 0.95);
+    margin-top: 8px;
+    font-size: 1.05em;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Sidebar styling */
+/* Sidebar styling with improved visual hierarchy */
 .sidebar-container {
-    background-color: var(--sidebar-bg);
+    background: linear-gradient(180deg, var(--sidebar-bg) 0%, rgba(37, 37, 38, 0.95) 100%);
     border-right: 1px solid var(--border-color);
-    padding: 15px;
+    padding: 18px;
     height: 100%;
-    border-radius: 8px;
+    border-radius: 10px;
+    box-shadow: inset -2px 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .file-btn {
@@ -75,152 +101,453 @@ CUSTOM_CSS = """
     color: var(--text-gray) !important;
     text-align: left !important;
     justify-content: flex-start !important;
-    padding: 8px 12px !important;
-    margin-bottom: 3px !important;
+    padding: 10px 14px !important;
+    margin-bottom: 4px !important;
     width: 100% !important;
-    border-radius: 4px !important;
-    transition: all 0.2s;
+    border-radius: 6px !important;
+    font-size: 0.95em !important;
+    cursor: pointer !important;
+    position: relative !important;
 }
 
 .file-btn:hover {
-    background-color: #2a2d2e !important;
+    background-color: rgba(42, 45, 46, 0.8) !important;
     color: var(--text-white) !important;
+    transform: translateX(4px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .file-btn.selected {
-    background-color: #37373d !important;
+    background: linear-gradient(90deg, rgba(255, 107, 53, 0.15) 0%, rgba(255, 107, 53, 0.05) 100%) !important;
     color: var(--text-white) !important;
-    border-left: 3px solid var(--primary-orange) !important;
+    border-left: 4px solid var(--primary-orange) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 6px rgba(255, 107, 53, 0.2);
 }
 
-/* Status Terminal */
+/* Status Terminal with enhanced readability */
 #terminal-log {
-    background-color: #1e1e1e;
+    background: linear-gradient(180deg, #1a1a1a 0%, #1e1e1e 100%);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-family: 'Consolas', 'Courier New', monospace;
+    border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 13px;
-    padding: 15px;
+    padding: 16px;
     height: 250px;
     overflow-y: auto;
     color: #d4d4d4;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
 }
 
-.log-info { color: var(--secondary-blue); }
-.log-error { color: var(--error-red); }
-.log-success { color: var(--success-green); }
-.log-warning { color: var(--warning-yellow); }
+#terminal-log::-webkit-scrollbar {
+    width: 10px;
+}
+
+#terminal-log::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+}
+
+#terminal-log::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+#terminal-log::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-orange);
+}
+
+.log-info { color: var(--info-blue); font-weight: 500; }
+.log-error { color: var(--error-red); font-weight: 600; }
+.log-success { color: var(--success-green); font-weight: 500; }
+.log-warning { color: var(--warning-yellow); font-weight: 500; }
 
 .log-entry {
-    margin-bottom: 4px;
-    line-height: 1.5;
+    margin-bottom: 6px;
+    line-height: 1.6;
+    padding: 4px 0;
+    border-left: 2px solid transparent;
+    padding-left: 8px;
+    animation: fadeIn 0.3s ease-in;
 }
 
-/* Main Generate Button */
+.log-entry:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-left-color: var(--primary-orange);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Main Generate Button with enhanced effects */
 #generate-btn {
     background: linear-gradient(135deg, var(--primary-orange), #ff8c42) !important;
     color: white !important;
-    font-weight: bold;
-    font-size: 16px !important;
-    padding: 15px 30px !important;
-    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 17px !important;
+    padding: 16px 35px !important;
+    border-radius: 10px !important;
     border: none !important;
-    box-shadow: 0 4px 6px rgba(255, 107, 53, 0.3);
-    transition: all 0.3s;
+    box-shadow: 0 6px 12px rgba(255, 107, 53, 0.4), 0 0 20px rgba(255, 107, 53, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+#generate-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+#generate-btn:hover::before {
+    left: 100%;
 }
 
 #generate-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 107, 53, 0.4);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(255, 107, 53, 0.5), 0 0 30px rgba(255, 107, 53, 0.3);
+}
+
+#generate-btn:active {
+    transform: translateY(-1px) scale(0.98);
 }
 
 #generate-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-/* File badge indicators */
+/* File badge indicators with improved styling */
 .file-badge {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
+    padding: 3px 10px;
+    border-radius: 14px;
     font-size: 10px;
-    font-weight: bold;
-    margin-left: 8px;
+    font-weight: 700;
+    margin-left: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: pulse 2s infinite;
 }
 
-.badge-analysis { background-color: var(--secondary-blue); color: white; }
-.badge-planning { background-color: var(--success-green); color: black; }
-.badge-solution { background-color: var(--warning-yellow); color: black; }
-.badge-implementation { background-color: var(--primary-orange); color: white; }
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+}
 
-/* Phase indicator */
+.badge-analysis {
+    background: linear-gradient(135deg, var(--secondary-blue), #5ba3ef);
+    color: white;
+}
+.badge-planning {
+    background: linear-gradient(135deg, var(--success-green), #9fdd9b);
+    color: #1a1a1a;
+}
+.badge-solution {
+    background: linear-gradient(135deg, var(--warning-yellow), #f0d393);
+    color: #1a1a1a;
+}
+.badge-implementation {
+    background: linear-gradient(135deg, var(--primary-orange), #ff8555);
+    color: white;
+}
+
+/* Phase indicator with enhanced animations */
 .phase-indicator {
     display: flex;
     justify-content: space-around;
     margin: 20px 0;
-    padding: 15px;
-    background: var(--sidebar-bg);
-    border-radius: 8px;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--sidebar-bg), rgba(37, 37, 38, 0.8));
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
 }
 
 .phase-step {
     text-align: center;
-    padding: 10px;
-    border-radius: 6px;
-    min-width: 100px;
-    transition: all 0.3s;
+    padding: 15px;
+    border-radius: 10px;
+    min-width: 110px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.phase-step::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: var(--primary-orange);
+    transition: width 0.4s ease;
 }
 
 .phase-step.active {
-    background: var(--primary-orange);
+    background: linear-gradient(135deg, var(--primary-orange), #ff8555);
     color: white;
-    transform: scale(1.05);
+    transform: scale(1.1);
+    box-shadow: 0 8px 16px rgba(255, 107, 53, 0.4);
+    border-color: rgba(255, 255, 255, 0.3);
+    animation: phaseGlow 2s infinite;
+}
+
+.phase-step.active::after {
+    width: 100%;
+}
+
+@keyframes phaseGlow {
+    0%, 100% { box-shadow: 0 8px 16px rgba(255, 107, 53, 0.4); }
+    50% { box-shadow: 0 8px 24px rgba(255, 107, 53, 0.6); }
 }
 
 .phase-step.completed {
-    background: var(--success-green);
-    color: black;
+    background: linear-gradient(135deg, var(--success-green), #9fdd9b);
+    color: #1a1a1a;
+    transform: scale(1.02);
+    border-color: var(--success-green);
+}
+
+.phase-step.completed::before {
+    content: '✓';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 .phase-step.pending {
-    background: var(--dark-bg);
+    background: rgba(42, 45, 46, 0.5);
     color: var(--text-gray);
-    opacity: 0.6;
+    opacity: 0.7;
+}
+
+.phase-step:hover:not(.pending) {
+    transform: scale(1.05);
 }
 
 /* Card styling for better organization */
 .info-card {
-    background: var(--sidebar-bg);
+    background: linear-gradient(135deg, var(--card-bg), rgba(42, 45, 46, 0.8));
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
-    margin: 10px 0;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 12px 0;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(255, 107, 53, 0.3);
 }
 
 .info-card h3 {
     color: var(--primary-orange);
     margin-top: 0;
+    font-size: 1.3em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-/* Progress bar */
+.info-card ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.info-card li {
+    padding: 8px 0;
+    padding-left: 28px;
+    position: relative;
+    line-height: 1.6;
+}
+
+.info-card li::before {
+    content: '▸';
+    position: absolute;
+    left: 8px;
+    color: var(--primary-orange);
+    font-weight: bold;
+}
+
+/* Progress bar with enhanced visuals */
 .progress-container {
-    background: var(--dark-bg);
-    border-radius: 10px;
+    background: linear-gradient(90deg, rgba(30, 30, 30, 0.8), rgba(42, 45, 46, 0.6));
+    border-radius: 12px;
     overflow: hidden;
-    height: 30px;
-    margin: 15px 0;
+    height: 32px;
+    margin: 18px 0;
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .progress-bar {
-    background: linear-gradient(90deg, var(--primary-orange), var(--secondary-blue));
+    background: linear-gradient(90deg, var(--primary-orange), var(--secondary-blue), #9b59b6);
+    background-size: 200% 100%;
     height: 100%;
-    transition: width 0.5s;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-weight: bold;
+    font-weight: 700;
+    font-size: 13px;
+    animation: progressShine 2s linear infinite;
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+}
+
+@keyframes progressShine {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
+
+/* Responsive design for mobile/tablet */
+@media (max-width: 768px) {
+    .header-container h1 {
+        font-size: 1.5em;
+    }
+
+    .phase-indicator {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .phase-step {
+        min-width: 80px;
+        padding: 10px;
+    }
+
+    #generate-btn {
+        font-size: 15px !important;
+        padding: 14px 28px !important;
+    }
+
+    .info-card {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-container {
+        padding: 18px 20px;
+    }
+
+    .header-container h1 {
+        font-size: 1.3em;
+    }
+
+    .sidebar-container {
+        padding: 12px;
+    }
+
+    #terminal-log {
+        height: 180px;
+        font-size: 12px;
+    }
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced tab styling */
+.tabs button {
+    transition: all 0.3s ease;
+}
+
+.tabs button:hover {
+    transform: translateY(-2px);
+}
+
+.tabs button.selected {
+    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+}
+
+/* Input field enhancements */
+textarea, input[type="text"], input[type="number"] {
+    border-radius: 8px !important;
+    border: 1px solid var(--border-color) !important;
+    background-color: var(--editor-bg) !important;
+    color: var(--text-white) !important;
+    padding: 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+textarea:focus, input:focus {
+    border-color: var(--primary-orange) !important;
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1) !important;
+    outline: none !important;
+}
+
+/* Code editor enhancements */
+.code-container {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+/* Accordion enhancements */
+.accordion {
+    border-radius: 8px !important;
+    border: 1px solid var(--border-color) !important;
+    background: var(--card-bg) !important;
+}
+
+.accordion summary {
+    padding: 12px 16px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.accordion summary:hover {
+    background: rgba(255, 107, 53, 0.1) !important;
+}
+
+/* Button enhancements for secondary buttons */
+button[variant="secondary"] {
+    background: linear-gradient(135deg, var(--sidebar-bg), var(--card-bg)) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-white) !important;
+    border-radius: 8px !important;
+    padding: 10px 20px !important;
+    transition: all 0.3s ease !important;
+}
+
+button[variant="secondary"]:hover {
+    background: linear-gradient(135deg, var(--card-bg), var(--sidebar-bg)) !important;
+    border-color: var(--primary-orange) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.2);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    animation: spin 1s linear infinite;
 }
 """
 
