@@ -8,29 +8,44 @@ import time
 from typing import Dict, List, Any, Optional
 from .generation_state import get_state_manager
 
-# Custom CSS for the editor page (same styling as main app)
+# Custom CSS for the editor page (enhanced with animations and better styling)
 EDITOR_CSS = """
 :root {
     --primary-orange: #FF6B35;
-    --dark-bg: #1e1e1e;
+    --primary-orange-hover: #ff8555;
+    --dark-bg: #1a1a1a;
     --editor-bg: #1e1e1e;
     --sidebar-bg: #252526;
+    --card-bg: #2a2d2e;
     --text-white: #ffffff;
     --text-gray: #cccccc;
+    --text-muted: #808080;
     --border-color: #3e3e42;
+    --success-green: #89d185;
+    --warning-yellow: #e5c07b;
+    --error-red: #f48771;
+    --info-blue: #61afef;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+* {
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .gradio-container {
     background-color: var(--dark-bg) !important;
     color: var(--text-white) !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Sidebar styling */
 .sidebar-container {
-    background-color: var(--sidebar-bg);
+    background: linear-gradient(180deg, var(--sidebar-bg) 0%, rgba(37, 37, 38, 0.95) 100%);
     border-right: 1px solid var(--border-color);
-    padding: 10px;
+    padding: 15px;
     height: 100%;
+    border-radius: 10px;
+    box-shadow: inset -2px 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .file-btn {
@@ -39,53 +54,105 @@ EDITOR_CSS = """
     color: var(--text-gray) !important;
     text-align: left !important;
     justify-content: flex-start !important;
-    padding: 5px 10px !important;
-    margin-bottom: 2px !important;
+    padding: 8px 12px !important;
+    margin-bottom: 3px !important;
     width: 100% !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
 }
 
 .file-btn:hover {
-    background-color: #2a2d2e !important;
+    background-color: rgba(42, 45, 46, 0.8) !important;
     color: var(--text-white) !important;
+    transform: translateX(3px);
 }
 
 .file-btn.selected {
-    background-color: #37373d !important;
+    background: linear-gradient(90deg, rgba(255, 107, 53, 0.15) 0%, rgba(255, 107, 53, 0.05) 100%) !important;
     color: var(--text-white) !important;
     border-left: 3px solid var(--primary-orange) !important;
+    font-weight: 600 !important;
 }
 
 /* Status Terminal */
 #terminal-log {
-    background-color: #1e1e1e;
+    background: linear-gradient(180deg, #1a1a1a 0%, #1e1e1e 100%);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-family: 'Consolas', 'Courier New', monospace;
+    border-radius: 6px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 13px;
-    padding: 10px;
+    padding: 12px;
     height: 150px;
     overflow-y: auto;
     color: #d4d4d4;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
-.log-info { color: #569cd6; }
-.log-error { color: #f48771; }
-.log-success { color: #89d185; }
-.log-warning { color: #cca700; }
+#terminal-log::-webkit-scrollbar {
+    width: 8px;
+}
+
+#terminal-log::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+#terminal-log::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+#terminal-log::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-orange);
+}
+
+.log-info { color: var(--info-blue); font-weight: 500; }
+.log-error { color: var(--error-red); font-weight: 600; }
+.log-success { color: var(--success-green); font-weight: 500; }
+.log-warning { color: var(--warning-yellow); font-weight: 500; }
+
+.log-entry {
+    animation: fadeInEntry 0.3s ease-in;
+}
+
+@keyframes fadeInEntry {
+    from { opacity: 0; transform: translateY(-3px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 /* Progress bar */
 .progress-container {
     width: 100%;
-    background-color: #2a2d2e;
-    border-radius: 4px;
-    margin: 10px 0;
+    background: linear-gradient(90deg, rgba(30, 30, 30, 0.8), rgba(42, 45, 46, 0.6));
+    border-radius: 6px;
+    margin: 12px 0;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
 }
 
 .progress-bar {
-    height: 8px;
-    background: linear-gradient(90deg, var(--primary-orange), #ff8c5a);
-    border-radius: 4px;
+    height: 10px;
+    background: linear-gradient(90deg, var(--primary-orange), #ff8c5a, var(--primary-orange));
+    background-size: 200% 100%;
+    border-radius: 6px;
     transition: width 0.3s ease;
+    animation: progressFlow 2s linear infinite;
+}
+
+@keyframes progressFlow {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 0%; }
+}
+
+/* Button enhancements */
+button {
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 """
 
