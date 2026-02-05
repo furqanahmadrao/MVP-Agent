@@ -14,6 +14,8 @@ from src.workflow import create_workflow, MVPAgentWorkflow
 from src.settings import get_settings_mgr, create_settings_ui
 from src.agent_state import AgentState
 from src.file_manager import get_file_manager
+from src.generation_state import get_state_manager
+from src.editor_page import create_editor_interface
 
 # Load environment variables
 load_dotenv()
@@ -132,7 +134,7 @@ generated_content_store = get_empty_state_files()
 def run_generation(idea: str, project_level: int):
     """
     Main generator function called by the button.
-    Yields updates to the UI.
+    Yields updates to the UI and creates a new generation session.
     """
     settings = get_settings_mgr()
     api_key = settings.get_api_key()
@@ -140,48 +142,97 @@ def run_generation(idea: str, project_level: int):
     if not api_key:
         yield {
             "status_html": "<div class='log-error'>❌ Error: Gemini API Key not found. Please set it in the Settings tab.</div>",
-            "generate_btn": gr.Button(interactive=True)
+            "generate_btn": gr.Button(interactive=True),
+            "editor_link": gr.HTML("")
         }
         return
 
-    # Initialize workflow
-    workflow = create_workflow(api_key=api_key)
+    # Create a new generation session
+    state_mgr = get_state_manager()
+    session_id = state_mgr.create_session(idea)
+    
+    # Initialize workflow with session_id for real-time updates
+    workflow = create_workflow(api_key=api_key, session_id=session_id)
     
     # State container for the thread
-    thread_state = {"done": False, "final_state": None, "error": None}
+    thread_state = {"done": False, "final_state": None, "error": None, "session_id": session_id}
     
-    # Update initial UI
+    # Update initial UI and show link to editor page
+    editor_url = f"http://localhost:7860/editor"  # This will be the editor page URL
     yield {
         "status_html": "<div class='log-info'>🚀 Starting MVP Agent v2.0...</div>",
         "generate_btn": gr.Button(interactive=False),
-        "main_tabs": gr.Tabs(selected="editor-tab")
+        "editor_link": gr.HTML(f"""
+            <div style='background: #2a2d2e; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #FF6B35;'>
+                <p style='color: #89d185; margin: 0 0 10px 0; font-weight: bold;'>✅ Generation started!</p>
+                <p style='color: #cccccc; margin: 0 0 10px 0;'>Open the editor page to watch real-time progress:</p>
+                <a href='/editor' target='_blank' style='display: inline-block; background: #FF6B35; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;'>
+                    🚀 Open Editor (New Window)
+                </a>
+                <p style='color: #808080; margin: 10px 0 0 0; font-size: 12px;'>Session ID: {session_id}</p>
+            </div>
+        """)
     }
     
-def worker():
+    state_mgr.update_status(session_id, "running", progress=5)
+    state_mgr.add_log(session_id, "🚀 Starting MVP Agent v2.0...", "INFO")
+    
+    def worker():
         try:
+            # Update state as we progress
+            state_mgr.add_log(session_id, "🔍 Analyzing idea and detecting project level...", "INFO")
+            state_mgr.update_status(session_id, "running", progress=10, phase="Analysis")
+            
             # Run the synchronous workflow
             result = workflow.run(idea=idea, api_key=api_key)
             thread_state["final_state"] = result
+            
+            # Extract and update files as they're generated
+            if result:
+                state_mgr.update_status(session_id, "running", progress=90, phase="Finalizing")
+                
+                # Update all files
+                files = {
+                    "overview.md": result.get("overview", ""),
+                    "product_brief.md": result.get("product_brief", ""),
+                    "prd.md": result.get("prd", ""),
+                    "architecture.md": result.get("architecture", ""),
+                    "user_flow.md": result.get("user_flow", ""),
+                    "design_system.md": result.get("design_system", ""),
+                    "roadmap.md": result.get("roadmap", ""),
+                    "testing_plan.md": result.get("testing_plan", ""),
+                    "deployment_guide.md": result.get("deployment_guide", "")
+                }
+                
+                # Update state manager with all files
+                for filename, content in files.items():
+                    if content:
+                        state_mgr.update_file(session_id, filename, content)
+                
+                # Copy logs from workflow to state manager
+                for log_entry in result.get("status_history", []):
+                    state_mgr.add_log(session_id, log_entry.get("message", ""), log_entry.get("type", "INFO"))
+                
+                state_mgr.complete_session(session_id, files)
         except Exception as e:
             thread_state["error"] = str(e)
+            state_mgr.set_error(session_id, str(e))
         finally:
             thread_state["done"] = True
 
     t = threading.Thread(target=worker)
     t.start()
     
-    # Polling loop
+    # Polling loop - update the main page status
     logs = []
     while not thread_state["done"]:
-        # In a real LangGraph implementation with streaming, we'd pull logs here.
-        # Since our current implementation is synchronous inside run(), 
-        # we simulated status updates in the agent_state but can't easily poll them 
-        # without a shared reference or async streaming.
-        # For this version, we'll show a "Working..." animation or simulated logs.
+        # Get logs from state manager
+        session = state_mgr.get_session(session_id)
+        if session:
+            logs = session.logs
+        else:
+            logs.append({"timestamp": time.time(), "message": "Agents are working... (Analysis -> Planning -> Solutioning)", "type": "INFO"})
         
-        # NOTE: A fully async LangGraph implementation would allow real-time event streaming.
-        # For now, we wait.
-        logs.append({"timestamp": time.time(), "message": "Agents are working... (Analysis -> Planning -> Solutioning)", "type": "INFO"})
         yield {
             "status_html": format_log_entries(logs)
         }
@@ -189,15 +240,20 @@ def worker():
         
     # Handle completion
     if thread_state["error"]:
-        logs.append({"timestamp": time.time(), "message": f"Error: {thread_state['error']}", "type": "ERROR"})
         yield {
             "status_html": format_log_entries(logs),
-            "generate_btn": gr.Button(interactive=True)
+            "generate_btn": gr.Button(interactive=True),
+            "editor_link": gr.HTML(f"""
+                <div style='background: #2a2d2e; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #f48771;'>
+                    <p style='color: #f48771; margin: 0; font-weight: bold;'>❌ Generation failed</p>
+                    <p style='color: #cccccc; margin: 10px 0 0 0;'>Check the logs above for details.</p>
+                </div>
+            """)
         }
     else:
         final_state = thread_state["final_state"]
         
-        # Populate global store
+        # Populate global store (for backward compatibility with old editor tab)
         global generated_content_store
         generated_content_store = {
             "overview.md": final_state.get("overview", ""),
@@ -223,7 +279,16 @@ def worker():
             "generate_btn": gr.Button(interactive=True),
             # Update editor with overview
             "code_editor": generated_content_store["overview.md"],
-            "file_list": gr.Radio(choices=list(generated_content_store.keys()), value="overview.md")
+            "file_list": gr.Radio(choices=list(generated_content_store.keys()), value="overview.md"),
+            "editor_link": gr.HTML(f"""
+                <div style='background: #2a2d2e; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #89d185;'>
+                    <p style='color: #89d185; margin: 0 0 10px 0; font-weight: bold;'>✅ Generation complete!</p>
+                    <p style='color: #cccccc; margin: 0 0 10px 0;'>View your generated files in the editor:</p>
+                    <a href='/editor' target='_blank' style='display: inline-block; background: #FF6B35; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;'>
+                        📝 Open Editor
+                    </a>
+                </div>
+            """)
         }
 
 def load_file_content(filename: str):
@@ -292,6 +357,9 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0", theme=gr.themes.Base()) a
                         project_level = gr.Slider(minimum=0, maximum=4, step=1, value=2, label="Project Complexity (Level)")
                     
                     generate_btn = gr.Button("🚀 Generate Blueprint", variant="primary", elem_id="generate-btn")
+                    
+                    # Editor page link (shows after generation starts)
+                    editor_link = gr.HTML("")
                 
                 with gr.Column(scale=1):
                     gr.Markdown("### 📟 Mission Control")
@@ -314,7 +382,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0", theme=gr.themes.Base()) a
     generate_btn.click(
         fn=run_generation,
         inputs=[idea_input, project_level],
-        outputs=[status_html, generate_btn, main_tabs, code_editor, file_list]
+        outputs=[status_html, generate_btn, code_editor, file_list, editor_link]
     )
     
     # 3. Download
@@ -328,4 +396,35 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0", theme=gr.themes.Base()) a
     )
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    # Create the editor interface
+    editor_demo = create_editor_interface()
+    
+    # Mount both apps using TabbedInterface or manual route mounting
+    # Note: Gradio 5.x doesn't have native multi-page routing in Blocks
+    # We'll use a workaround with gr.mount_gradio_app if running under FastAPI
+    # For standalone mode, we'll just launch the main demo and provide instructions
+    
+    # Check if we should launch editor only (can be passed as command line arg)
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--editor":
+        print("Launching Editor interface only...")
+        editor_demo.launch(server_name="0.0.0.0", server_port=7861, share=False)
+    else:
+        # Launch main demo with both interfaces combined
+        # Create a combined interface using TabbedInterface for simplicity
+        from gradio import TabbedInterface
+        
+        combined = TabbedInterface(
+            [demo, editor_demo],
+            ["🏠 Main", "📝 Editor"],
+            title="MVP Agent v2.0"
+        )
+        
+        print("=" * 60)
+        print("MVP Agent v2.0 - BMAD Edition")
+        print("=" * 60)
+        print("Main Interface: http://localhost:7860/?__theme=dark")
+        print("Editor Interface: Switch to 'Editor' tab after generation")
+        print("=" * 60)
+        
+        combined.launch(server_name="0.0.0.0", server_port=7860)
