@@ -192,24 +192,133 @@ Auto-detected templates for:
 
 ## 🔧 Configuration
 
-You can configure the application via the UI or `.env` file:
+You can configure the application via the UI Settings tab or `.env` file:
 
-- `GEMINI_API_KEY`: Your Google GenAI key.
-- `use_toon_format`: Set to `True` to enable token optimization.
-- `project_level_auto_detect`: Enable automatic complexity estimation.
+### Environment Variables
+Create a `.env` file in the root directory (copy from `.env.example`):
+```bash
+GEMINI_API_KEY=your_api_key_here
+```
+
+### UI Settings
+- **API Key**: Set your Gemini API key in the Settings tab
+- **Model Selection**: Choose between Gemini 2.5 Flash (fast) or Pro (powerful)
+- **TOON Format**: Enable token optimization to reduce API costs by 30-60%
+- **Project Complexity**: Auto-detect or manually set project level (0-4)
+
+### Advanced Settings
+- `GRADIO_SERVER_NAME`: Server host (default: 0.0.0.0)
+- `GRADIO_SERVER_PORT`: Server port (default: 7860)
+- `user_settings.json`: Stores UI preferences (auto-created, excluded from git)
+
+---
+
+## 🔒 Security & Production Readiness
+
+**Current Status:** ✅ Phase 1 Security Fixes Complete (7/8 issues resolved)
+**Deployment Readiness Score:** 7.5/10 (was 6/10)
+
+### Recent Security Improvements:
+- ✅ Path traversal vulnerabilities fixed in file manager
+- ✅ MCP services bound to localhost only (no network exposure)
+- ✅ Input validation and sanitization implemented
+- ✅ ZIP bomb protection with size/count limits
+- ✅ Thread-safe state management with per-session locks
+- ✅ Request timeouts to prevent hung API calls
+- ✅ Docker container runs as non-root user
+- ✅ All dependencies pinned to specific versions
+- ✅ `.dockerignore` created to prevent secret leakage
+
+For detailed security information, see:
+- [`SECURITY_REVIEW_FINDINGS.md`](SECURITY_REVIEW_FINDINGS.md) - Complete security audit
+- [`SECURITY_FIXES_APPLIED.md`](SECURITY_FIXES_APPLIED.md) - Applied fixes and testing
+- [`SECURITY_ISSUES_TRACKER.md`](SECURITY_ISSUES_TRACKER.md) - Ongoing issues tracking
+
+### Production Deployment
+The application is suitable for **development and staging** environments. For production deployment:
+1. Complete remaining Phase 2 reliability fixes
+2. Add monitoring and observability (Prometheus/Grafana)
+3. Implement rate limiting and load balancing
+4. Set up CI/CD with automated security scanning
+5. Review compliance requirements (GDPR, SOC2, etc.)
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see `FEATURE_SUGGESTIONS.md` for our roadmap.
+We welcome contributions! Here's how to get started:
 
-1.  Fork the repo.
-2.  Create a feature branch.
-3.  Submit a Pull Request.
+1.  Fork the repository
+2.  Create a feature branch (`git checkout -b feature/amazing-feature`)
+3.  Make your changes following the coding guidelines in [`AGENTS.md`](AGENTS.md)
+4.  Run security checks: `bandit -r src/ tools/`
+5.  Test your changes thoroughly
+6.  Commit your changes (`git commit -m 'Add amazing feature'`)
+7.  Push to the branch (`git push origin feature/amazing-feature`)
+8.  Open a Pull Request
+
+### Development Guidelines
+- Follow PEP 8 conventions with 4-space indentation
+- Use `snake_case` for functions/variables, `PascalCase` for classes
+- Add docstrings to all public functions
+- Test on fresh virtual environment before submitting
+- Keep security in mind - validate all inputs, avoid hardcoded secrets
+
+For detailed guidelines, see [`AGENTS.md`](AGENTS.md).
+
+---
+
+## 📚 Documentation
+
+- **[README.md](README.md)** - This file, main documentation
+- **[AGENTS.md](AGENTS.md)** - Repository guidelines and coding standards
+- **[SECURITY_REVIEW_FINDINGS.md](SECURITY_REVIEW_FINDINGS.md)** - Security audit results
+- **[SECURITY_FIXES_APPLIED.md](SECURITY_FIXES_APPLIED.md)** - Applied security fixes
+- **`.env.example`** - Environment variable template
+
+---
+
+## 🐛 Known Issues & Roadmap
+
+### Current Limitations:
+- Single API key shared across all users (multi-tenant support planned)
+- No persistent storage (sessions cleared on restart)
+- Limited to Gemini models (OpenAI/Anthropic support planned)
+- Manual file editing in UI (real-time collaboration coming)
+
+### Upcoming Features (v2.1):
+- 💾 Database integration for persistent sessions
+- 🔑 Multi-user authentication and authorization
+- 🌐 OpenAI GPT-4 and Anthropic Claude support
+- 📊 Usage analytics and cost tracking
+- 🎯 Custom templates and industry presets
+- 🔄 Git integration for version control
+- 🧪 Automated testing framework
+
+---
+
+## 💬 Support & Community
+
+- **Issues**: [GitHub Issues](https://github.com/furqanahmadrao/MVP-Agent/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/furqanahmadrao/MVP-Agent/discussions)
+- **Pull Requests**: [Contributing Guide](#-contributing)
 
 ---
 
 ## 📄 License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google Gemini** for powerful AI capabilities with native search grounding
+- **LangGraph** team for the excellent multi-agent orchestration framework
+- **Gradio** for the beautiful UI framework
+- **BMAD Method** for the structured development methodology
+- All contributors and users who provide feedback and improvements
+
+---
+
+**Built with ❤️ using Gemini 2.5, LangGraph, and the BMAD methodology.**
