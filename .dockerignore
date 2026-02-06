@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.envrc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs and outputs
+logs/
+outputs/
+*.log
+
+# IDEs
+.vscode/
+.idea/
+.history/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation that isn't needed in the container
+SECURITY_REVIEW_FINDINGS.md
+SECURITY_ISSUES_TRACKER.md
+# AGENTS.md might be useful for some tools, but usually not needed at runtime.
+AGENTS.md
+
+# Secrets
+.env
+.env.example

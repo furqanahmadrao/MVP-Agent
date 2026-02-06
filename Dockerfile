@@ -11,14 +11,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user
+RUN useradd -m appuser
+USER appuser
+WORKDIR /home/appuser/app
+
 # Copy requirements first (caching layer)
-COPY requirements.txt .
+COPY --chown=appuser:appuser requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Add user's bin to PATH
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 # Copy source code
-COPY . .
+COPY --chown=appuser:appuser . .
 
 # Expose Gradio port
 EXPOSE 7860

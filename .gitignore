@@ -2,7 +2,6 @@
 .env
 
 # Development/planning docs (not needed in production)
-AGENTS.md
 docs/
 .kiro/
 
