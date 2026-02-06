@@ -43,28 +43,44 @@ Built on the **BMAD (Breakthrough Method for Agile AI-Driven Development)** meth
 
 ## 🏗️ System Architecture (BMAD Method)
 
-The workflow follows a strict 4-phase process:
+The workflow follows a strict 4-phase process with 6 specialized agents:
 
-1.  **Analysis Phase**: The Market Analyst researches competitors and user pain points.
-2.  **Planning Phase**: The PRD Generator creates functional requirements and user stories.
-3.  **Solutioning Phase**: The Architect and UX Designer build the technical and visual foundation.
-4.  **Implementation Phase**: The Sprint Planner outlines the roadmap and QA strategy.
+1.  **Analysis Phase**: 
+    - **Market Analyst** researches competitors and user pain points using Google Search grounding
+    - **Financial Modeler** creates comprehensive 3-year financial projections and unit economics
+2.  **Planning Phase**: 
+    - **PRD Generator** creates functional requirements, user stories, feature prioritization, and competitive analysis
+3.  **Solutioning Phase**: 
+    - **Architect** builds technical foundation with system diagrams and tech stack decisions
+    - **UX Designer** creates user flows, wireframes, and design systems
+4.  **Implementation Phase**: 
+    - **Sprint Planner** outlines roadmap, testing strategy, and deployment guide
 
 ```mermaid
 graph LR
     User[User Idea] --> Analyst[Market Analyst]
-    Analyst --> PRD[PRD Generator]
+    Analyst --> Financial[Financial Modeler]
+    Financial --> PRD[PRD Generator]
     PRD --> Architect[System Architect]
     Architect --> UX[UX Designer]
     UX --> Planner[Sprint Planner]
     Planner --> Output[Final Blueprint]
 ```
 
+### Technology Stack
+- **AI Models**: Google Gemini 2.5 Flash/Pro with native search grounding
+- **Framework**: LangGraph for agent orchestration
+- **UI**: Gradio with custom CSS
+- **Services**: FastAPI-based MCP services for file operations
+- **Format**: Optional TOON (Token-Oriented Object Notation) for optimization
+
 ---
 
 ## 🚀 Quick Start
 
-### Option A: Docker (Recommended)
+### Option A: Docker (Recommended) 🐳
+
+**Security Note:** The Docker container now runs as a non-root user for enhanced security.
 
 1.  **Build the image:**
     ```bash
@@ -72,9 +88,11 @@ graph LR
     ```
 2.  **Run the container:**
     ```bash
-    docker run -p 7860:7860 mvp-agent
+    docker run -p 7860:7860 -e GEMINI_API_KEY=your_key_here mvp-agent
     ```
 3.  **Open in Browser:** `http://localhost:7860`
+
+**Note:** The container includes `.dockerignore` to prevent secrets from being included in the build.
 
 ### Option B: Local Installation
 
@@ -198,15 +216,58 @@ You can configure the application via the UI or `.env` file:
 - `use_toon_format`: Set to `True` to enable token optimization.
 - `project_level_auto_detect`: Enable automatic complexity estimation.
 
+### Environment Setup
+1. Copy `.env.example` to `.env`
+2. Add your Gemini API key: `GEMINI_API_KEY=your_key_here`
+3. Configure optional settings as needed
+
+---
+
+## 🔒 Security & Production Readiness
+
+**Latest Security Update:** February 6, 2026  
+**Status:** Phase 1 Critical Fixes COMPLETED (7/8 issues resolved) ✅  
+**Deployment Readiness Score:** 7.5/10 (improved from 6/10)
+
+### Key Security Improvements:
+- ✅ **Path Traversal Fixed**: All file operations now use secure path validation
+- ✅ **Network Security**: MCP services bind to localhost only (127.0.0.1)
+- ✅ **Docker Hardening**: Container runs as non-root user
+- ✅ **Input Validation**: Comprehensive validation for all user inputs
+- ✅ **Dependency Security**: All dependencies pinned and validated
+- ✅ **.dockerignore**: Prevents secret leakage in builds
+
+### MCP Services
+The application includes two Model Context Protocol (MCP) services:
+- **File Manager MCP** (Port 8081): Handles file operations with path validation
+- **Markdown Formatter MCP** (Port 8082): Validates and formats markdown content
+
+Both services are secured and only accessible from localhost.
+
+For detailed security findings and remediation plan, see:
+- `SECURITY_FIXES_APPLIED.md` - Completed fixes
+- `SECURITY_REVIEW_FINDINGS.md` - Full security audit
+- `SECURITY_ISSUES_TRACKER.md` - Ongoing issues
+
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see `FEATURE_SUGGESTIONS.md` for our roadmap.
+We welcome contributions! Please see `AGENTS.md` for repository guidelines.
 
 1.  Fork the repo.
 2.  Create a feature branch.
-3.  Submit a Pull Request.
+3.  Submit a Pull Request with:
+    - Clear description of changes
+    - Any security considerations
+    - Screenshots for UI changes
+
+### Development Guidelines
+- Follow PEP 8 conventions
+- Use `snake_case` for functions/variables
+- Keep prompts centralized in `src/prompts.py`
+- Run manual tests with `python test_demo.py`
+- Check security with provided guidelines
 
 ---
 
