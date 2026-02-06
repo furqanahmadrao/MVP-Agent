@@ -48,16 +48,17 @@ class GeminiClient:
             tools=tools
         )
 
-    def generate_with_grounding(self, prompt: str, model_name: str = None) -> Dict[str, Any]:
+    def generate_with_grounding(self, prompt: str, model_name: str = None, timeout: int = 120) -> Dict[str, Any]:
         """
-        Generate content using Gemini's native Google Search Grounding.
+        Generate content with Google Search grounding.
         
         Args:
-            prompt: The user query or prompt
-            model_name: Optional model override
+            prompt: The prompt to send to the model
+            model_name: Optional model name override
+            timeout: Maximum time to wait for response in seconds (default: 120)
             
         Returns:
-            Dict containing 'text', 'citations', and 'grounding_metadata'
+            Dictionary containing text, grounding_metadata, and citations
         """
         model_name = model_name or self.settings.get_model()
         
@@ -66,7 +67,15 @@ class GeminiClient:
         model = self.get_model(model_name, tools=tools)
         
         try:
-            response = model.generate_content(prompt)
+            import concurrent.futures
+            
+            # Run generation in a thread pool with timeout
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(model.generate_content, prompt)
+                try:
+                    response = future.result(timeout=timeout)
+                except concurrent.futures.TimeoutError:
+                    raise Exception(f"Gemini API request timed out after {timeout}s")
             
             # Extract usage metadata if available
             if response.usage_metadata:

@@ -8,6 +8,7 @@ import shutil
 import zipfile
 import tempfile
 import re
+import threading
 from typing import Dict, Optional, Tuple
 from datetime import datetime
 
@@ -213,10 +214,13 @@ All documents include "Agent Guidance" sections to help AI coding agents underst
 
 # Singleton instance
 _file_manager = None
+_file_manager_lock = threading.Lock()
 
 def get_file_manager() -> FileManager:
     """Get or create the file manager singleton"""
     global _file_manager
     if _file_manager is None:
-        _file_manager = FileManager()
+        with _file_manager_lock:
+            if _file_manager is None:
+                _file_manager = FileManager()
     return _file_manager

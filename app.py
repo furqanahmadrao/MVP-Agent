@@ -5,8 +5,10 @@ import gradio as gr
 import os
 import time
 import threading
+import re
+from html import escape
 from dotenv import load_dotenv
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 from pathlib import Path
 
 # Import new architecture modules
@@ -16,540 +18,51 @@ from src.agent_state import AgentState
 from src.file_manager import get_file_manager
 from src.generation_state import get_state_manager
 from src.editor_page import create_editor_interface
+from src.styles import GLOBAL_CSS
 
 # Load environment variables
 load_dotenv()
 
-# Custom CSS for modern "Code Editor" look - Enhanced version with improved UX
-CUSTOM_CSS = """
-:root {
-    --primary-orange: #FF6B35;
-    --primary-orange-hover: #ff8555;
-    --secondary-blue: #4A90E2;
-    --dark-bg: #1a1a1a;
-    --editor-bg: #1e1e1e;
-    --sidebar-bg: #252526;
-    --card-bg: #2a2d2e;
-    --text-white: #ffffff;
-    --text-gray: #cccccc;
-    --text-muted: #808080;
-    --border-color: #3e3e42;
-    --success-green: #89d185;
-    --warning-yellow: #e5c07b;
-    --error-red: #f48771;
-    --info-blue: #61afef;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
-}
+# Custom CSS is now imported from src.styles
+
+
+def validate_and_sanitize_idea(idea: str) -> Tuple[bool, str, str]:
+    """
+    Validate user idea input.
+    
+    Returns:
+        (is_valid, sanitized_idea, error_message)
+    """
+    if not idea:
+        return False, "", "Please enter an idea."
+        
+    # Check length
+    if len(idea.strip()) < 10:
+        return False, "", "Idea must be at least 10 characters."
+    
+    if len(idea) > 5000:
+        return False, "", "Idea is too long (max 5000 characters)."
+    
+    # Remove control characters except newlines/tabs
+    sanitized = ''.join(char for char in idea if ord(char) >= 32 or char in '\n\r\t')
+    
+    # HTML escape for safety in display
+    # Note: We keep the original for the LLM (it handles raw text), but for UI display/filenames we use sanitized
+    sanitized_display = escape(sanitized)
+    
+    # Check for prompt injection patterns (basic check)
+    dangerous_patterns = [
+        r'ignore\s+(all\s+)?previous\s+instructions',
+        r'output\s+(all\s+)?(environment|env)\s+variables',
+        r'print\s+(api|secret|password)',
+    ]
+    
+    for pattern in dangerous_patterns:
+        if re.search(pattern, sanitized.lower()):
+            return False, "", "Input contains prohibited patterns."
+    
+    return True, sanitized, ""
 
-* {
-    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.gradio-container {
-    background-color: var(--dark-bg) !important;
-    color: var(--text-white) !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-
-/* Header styling with animated gradient */
-.header-container {
-    background: linear-gradient(135deg, var(--primary-orange), var(--secondary-blue), #9b59b6);
-    background-size: 200% 200%;
-    animation: gradientShift 10s ease infinite;
-    padding: 25px 30px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-    box-shadow: var(--shadow-lg);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.header-container h1 {
-    color: white;
-    font-weight: 700;
-    margin: 0;
-    font-size: 2em;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.header-container p {
-    color: rgba(255, 255, 255, 0.95);
-    margin-top: 8px;
-    font-size: 1.05em;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* Sidebar styling with improved visual hierarchy */
-.sidebar-container {
-    background: linear-gradient(180deg, var(--sidebar-bg) 0%, rgba(37, 37, 38, 0.95) 100%);
-    border-right: 1px solid var(--border-color);
-    padding: 18px;
-    height: 100%;
-    border-radius: 10px;
-    box-shadow: inset -2px 0 8px rgba(0, 0, 0, 0.2);
-}
-
-.file-btn {
-    background: transparent !important;
-    border: none !important;
-    color: var(--text-gray) !important;
-    text-align: left !important;
-    justify-content: flex-start !important;
-    padding: 10px 14px !important;
-    margin-bottom: 4px !important;
-    width: 100% !important;
-    border-radius: 6px !important;
-    font-size: 0.95em !important;
-    cursor: pointer !important;
-    position: relative !important;
-}
-
-.file-btn:hover {
-    background-color: rgba(42, 45, 46, 0.8) !important;
-    color: var(--text-white) !important;
-    transform: translateX(4px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.file-btn.selected {
-    background: linear-gradient(90deg, rgba(255, 107, 53, 0.15) 0%, rgba(255, 107, 53, 0.05) 100%) !important;
-    color: var(--text-white) !important;
-    border-left: 4px solid var(--primary-orange) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 2px 6px rgba(255, 107, 53, 0.2);
-}
-
-/* Status Terminal with enhanced readability */
-#terminal-log {
-    background: linear-gradient(180deg, #1a1a1a 0%, #1e1e1e 100%);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 13px;
-    padding: 16px;
-    height: 250px;
-    overflow-y: auto;
-    color: #d4d4d4;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
-    position: relative;
-}
-
-#terminal-log::-webkit-scrollbar {
-    width: 10px;
-}
-
-#terminal-log::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-}
-
-#terminal-log::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 5px;
-}
-
-#terminal-log::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-orange);
-}
-
-.log-info { color: var(--info-blue); font-weight: 500; }
-.log-error { color: var(--error-red); font-weight: 600; }
-.log-success { color: var(--success-green); font-weight: 500; }
-.log-warning { color: var(--warning-yellow); font-weight: 500; }
-
-.log-entry {
-    margin-bottom: 6px;
-    line-height: 1.6;
-    padding: 4px 0;
-    border-left: 2px solid transparent;
-    padding-left: 8px;
-    animation: fadeIn 0.3s ease-in;
-}
-
-.log-entry:hover {
-    background-color: rgba(255, 255, 255, 0.03);
-    border-left-color: var(--primary-orange);
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Main Generate Button with enhanced effects */
-#generate-btn {
-    background: linear-gradient(135deg, var(--primary-orange), #ff8c42) !important;
-    color: white !important;
-    font-weight: 700 !important;
-    font-size: 17px !important;
-    padding: 16px 35px !important;
-    border-radius: 10px !important;
-    border: none !important;
-    box-shadow: 0 6px 12px rgba(255, 107, 53, 0.4), 0 0 20px rgba(255, 107, 53, 0.2);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    position: relative !important;
-    overflow: hidden !important;
-}
-
-#generate-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-#generate-btn:hover::before {
-    left: 100%;
-}
-
-#generate-btn:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 10px 20px rgba(255, 107, 53, 0.5), 0 0 30px rgba(255, 107, 53, 0.3);
-}
-
-#generate-btn:active {
-    transform: translateY(-1px) scale(0.98);
-}
-
-#generate-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-/* File badge indicators with improved styling */
-.file-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 14px;
-    font-size: 10px;
-    font-weight: 700;
-    margin-left: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.85; }
-}
-
-.badge-analysis {
-    background: linear-gradient(135deg, var(--secondary-blue), #5ba3ef);
-    color: white;
-}
-.badge-planning {
-    background: linear-gradient(135deg, var(--success-green), #9fdd9b);
-    color: #1a1a1a;
-}
-.badge-solution {
-    background: linear-gradient(135deg, var(--warning-yellow), #f0d393);
-    color: #1a1a1a;
-}
-.badge-implementation {
-    background: linear-gradient(135deg, var(--primary-orange), #ff8555);
-    color: white;
-}
-
-/* Phase indicator with enhanced animations */
-.phase-indicator {
-    display: flex;
-    justify-content: space-around;
-    margin: 20px 0;
-    padding: 20px;
-    background: linear-gradient(135deg, var(--sidebar-bg), rgba(37, 37, 38, 0.8));
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow);
-}
-
-.phase-step {
-    text-align: center;
-    padding: 15px;
-    border-radius: 10px;
-    min-width: 110px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 2px solid transparent;
-    position: relative;
-}
-
-.phase-step::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 3px;
-    background: var(--primary-orange);
-    transition: width 0.4s ease;
-}
-
-.phase-step.active {
-    background: linear-gradient(135deg, var(--primary-orange), #ff8555);
-    color: white;
-    transform: scale(1.1);
-    box-shadow: 0 8px 16px rgba(255, 107, 53, 0.4);
-    border-color: rgba(255, 255, 255, 0.3);
-    animation: phaseGlow 2s infinite;
-}
-
-.phase-step.active::after {
-    width: 100%;
-}
-
-@keyframes phaseGlow {
-    0%, 100% { box-shadow: 0 8px 16px rgba(255, 107, 53, 0.4); }
-    50% { box-shadow: 0 8px 24px rgba(255, 107, 53, 0.6); }
-}
-
-.phase-step.completed {
-    background: linear-gradient(135deg, var(--success-green), #9fdd9b);
-    color: #1a1a1a;
-    transform: scale(1.02);
-    border-color: var(--success-green);
-}
-
-.phase-step.completed::before {
-    content: '✓';
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 14px;
-    font-weight: bold;
-}
-
-.phase-step.pending {
-    background: rgba(42, 45, 46, 0.5);
-    color: var(--text-gray);
-    opacity: 0.7;
-}
-
-.phase-step:hover:not(.pending) {
-    transform: scale(1.05);
-}
-
-/* Card styling for better organization */
-.info-card {
-    background: linear-gradient(135deg, var(--card-bg), rgba(42, 45, 46, 0.8));
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 12px 0;
-    box-shadow: var(--shadow);
-    transition: all 0.3s ease;
-}
-
-.info-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    border-color: rgba(255, 107, 53, 0.3);
-}
-
-.info-card h3 {
-    color: var(--primary-orange);
-    margin-top: 0;
-    font-size: 1.3em;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.info-card ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.info-card li {
-    padding: 8px 0;
-    padding-left: 28px;
-    position: relative;
-    line-height: 1.6;
-}
-
-.info-card li::before {
-    content: '▸';
-    position: absolute;
-    left: 8px;
-    color: var(--primary-orange);
-    font-weight: bold;
-}
-
-/* Progress bar with enhanced visuals */
-.progress-container {
-    background: linear-gradient(90deg, rgba(30, 30, 30, 0.8), rgba(42, 45, 46, 0.6));
-    border-radius: 12px;
-    overflow: hidden;
-    height: 32px;
-    margin: 18px 0;
-    border: 1px solid var(--border-color);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.progress-bar {
-    background: linear-gradient(90deg, var(--primary-orange), var(--secondary-blue), #9b59b6);
-    background-size: 200% 100%;
-    height: 100%;
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 13px;
-    animation: progressShine 2s linear infinite;
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
-}
-
-@keyframes progressShine {
-    0% { background-position: 0% 0%; }
-    100% { background-position: 200% 0%; }
-}
-
-/* Responsive design for mobile/tablet */
-@media (max-width: 768px) {
-    .header-container h1 {
-        font-size: 1.5em;
-    }
-
-    .phase-indicator {
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .phase-step {
-        min-width: 80px;
-        padding: 10px;
-    }
-
-    #generate-btn {
-        font-size: 15px !important;
-        padding: 14px 28px !important;
-    }
-
-    .info-card {
-        padding: 15px;
-    }
-}
-
-@media (max-width: 480px) {
-    .header-container {
-        padding: 18px 20px;
-    }
-
-    .header-container h1 {
-        font-size: 1.3em;
-    }
-
-    .sidebar-container {
-        padding: 12px;
-    }
-
-    #terminal-log {
-        height: 180px;
-        font-size: 12px;
-    }
-}
-
-/* Smooth scroll behavior */
-html {
-    scroll-behavior: smooth;
-}
-
-/* Enhanced tab styling */
-.tabs button {
-    transition: all 0.3s ease;
-}
-
-.tabs button:hover {
-    transform: translateY(-2px);
-}
-
-.tabs button.selected {
-    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
-}
-
-/* Input field enhancements */
-textarea, input[type="text"], input[type="number"] {
-    border-radius: 8px !important;
-    border: 1px solid var(--border-color) !important;
-    background-color: var(--editor-bg) !important;
-    color: var(--text-white) !important;
-    padding: 12px !important;
-    transition: all 0.3s ease !important;
-}
-
-textarea:focus, input:focus {
-    border-color: var(--primary-orange) !important;
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1) !important;
-    outline: none !important;
-}
-
-/* Code editor enhancements */
-.code-container {
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border-color);
-}
-
-/* Accordion enhancements */
-.accordion {
-    border-radius: 8px !important;
-    border: 1px solid var(--border-color) !important;
-    background: var(--card-bg) !important;
-}
-
-.accordion summary {
-    padding: 12px 16px !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-}
-
-.accordion summary:hover {
-    background: rgba(255, 107, 53, 0.1) !important;
-}
-
-/* Button enhancements for secondary buttons */
-button[variant="secondary"] {
-    background: linear-gradient(135deg, var(--sidebar-bg), var(--card-bg)) !important;
-    border: 1px solid var(--border-color) !important;
-    color: var(--text-white) !important;
-    border-radius: 8px !important;
-    padding: 10px 20px !important;
-    transition: all 0.3s ease !important;
-}
-
-button[variant="secondary"]:hover {
-    background: linear-gradient(135deg, var(--card-bg), var(--sidebar-bg)) !important;
-    border-color: var(--primary-orange) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.2);
-}
-
-/* Loading spinner animation */
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.loading-spinner {
-    animation: spin 1s linear infinite;
-}
-"""
 
 def format_log_entries(log_events: List[Dict]) -> str:
     """Format status history as HTML for the terminal view."""
@@ -590,28 +103,46 @@ def get_empty_state_files() -> Dict[str, str]:
         "deployment_guide.md": ""
     }
 
-# Global state to hold generated content
-generated_content_store = get_empty_state_files()
+# Global state removed - replaced with per-session gr.State
+# generated_content_store = get_empty_state_files()
 
-def run_generation(idea: str, project_level: int):
+def run_generation(idea: str, project_level: int, session_files: Dict[str, str]):
     """
     Main generator function called by the button.
     Yields updates to the UI and creates a new generation session.
     """
+    # Validate input
+    is_valid, sanitized_idea, error_msg = validate_and_sanitize_idea(idea)
+    if not is_valid:
+        yield (
+            f"<div class='log-error'>❌ {error_msg}</div>", # status_html
+            gr.Button(interactive=True),                    # generate_btn
+            gr.update(),                                    # code_editor
+            gr.update(),                                    # file_list
+            gr.update(),                                    # editor_link
+            gr.update(),                                    # session_files
+            gr.update()                                     # session_id_state
+        )
+        return
+
     settings = get_settings_mgr()
     api_key = settings.get_api_key()
     
     if not api_key:
-        yield {
-            "status_html": "<div class='log-error'>❌ Error: Gemini API Key not found. Please set it in the Settings tab.</div>",
-            "generate_btn": gr.Button(interactive=True),
-            "editor_link": gr.HTML("")
-        }
+        yield (
+            "<div class='log-error'>❌ Error: Gemini API Key not found. Please set it in the Settings tab.</div>",
+            gr.Button(interactive=True),
+            gr.update(),
+            gr.update(),
+            gr.HTML(""),
+            gr.update(),
+            gr.update()
+        )
         return
 
     # Create a new generation session
     state_mgr = get_state_manager()
-    session_id = state_mgr.create_session(idea)
+    session_id = state_mgr.create_session(sanitized_idea)
     
     # Initialize workflow with session_id for real-time updates
     workflow = create_workflow(api_key=api_key, session_id=session_id)
@@ -620,11 +151,12 @@ def run_generation(idea: str, project_level: int):
     thread_state = {"done": False, "final_state": None, "error": None, "session_id": session_id}
     
     # Update initial UI and show link to editor page
-    editor_url = f"http://localhost:7860/editor"  # This will be the editor page URL
-    yield {
-        "status_html": "<div class='log-info'>🚀 Starting MVP Agent v2.0...</div>",
-        "generate_btn": gr.Button(interactive=False),
-        "editor_link": gr.HTML(f"""
+    yield (
+        "<div class='log-info'>🚀 Starting MVP Agent v2.0...</div>", # status_html
+        gr.Button(interactive=False), # generate_btn
+        gr.update(), # code_editor
+        gr.update(), # file_list
+        gr.HTML(f"""
             <div style='background: #2a2d2e; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #FF6B35;'>
                 <p style='color: #89d185; margin: 0 0 10px 0; font-weight: bold;'>✅ Generation started!</p>
                 <p style='color: #cccccc; margin: 0 0 10px 0;'>Open the editor page to watch real-time progress:</p>
@@ -633,8 +165,10 @@ def run_generation(idea: str, project_level: int):
                 </a>
                 <p style='color: #808080; margin: 10px 0 0 0; font-size: 12px;'>Session ID: {session_id}</p>
             </div>
-        """)
-    }
+        """), # editor_link
+        gr.update(), # session_files
+        session_id   # session_id_state
+    )
     
     state_mgr.update_status(session_id, "running", progress=5)
     state_mgr.add_log(session_id, "🚀 Starting MVP Agent v2.0...", "INFO")
@@ -646,7 +180,8 @@ def run_generation(idea: str, project_level: int):
             state_mgr.update_status(session_id, "running", progress=10, phase="Analysis")
             
             # Run the synchronous workflow
-            result = workflow.run(idea=idea, api_key=api_key)
+            # Use sanitized idea
+            result = workflow.run(idea=sanitized_idea, api_key=api_key)
             thread_state["final_state"] = result
             
             # Extract and update files as they're generated
@@ -695,29 +230,38 @@ def run_generation(idea: str, project_level: int):
         else:
             logs.append({"timestamp": time.time(), "message": "Agents are working... (Analysis -> Planning -> Solutioning)", "type": "INFO"})
         
-        yield {
-            "status_html": format_log_entries(logs)
-        }
+        yield (
+            format_log_entries(logs), # status_html
+            gr.update(), # generate_btn
+            gr.update(), # code_editor
+            gr.update(), # file_list
+            gr.update(), # editor_link
+            gr.update(), # session_files
+            gr.update()  # session_id_state
+        )
         time.sleep(2)
         
     # Handle completion
     if thread_state["error"]:
-        yield {
-            "status_html": format_log_entries(logs),
-            "generate_btn": gr.Button(interactive=True),
-            "editor_link": gr.HTML(f"""
+        yield (
+            format_log_entries(logs), # status_html
+            gr.Button(interactive=True), # generate_btn
+            gr.update(), # code_editor
+            gr.update(), # file_list
+            gr.HTML(f"""
                 <div style='background: #2a2d2e; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #f48771;'>
                     <p style='color: #f48771; margin: 0; font-weight: bold;'>❌ Generation failed</p>
                     <p style='color: #cccccc; margin: 10px 0 0 0;'>Check the logs above for details.</p>
                 </div>
-            """)
-        }
+            """), # editor_link
+            gr.update(), # session_files
+            gr.update()  # session_id_state
+        )
     else:
         final_state = thread_state["final_state"]
         
-        # Populate global store (for backward compatibility with old editor tab)
-        global generated_content_store
-        generated_content_store = {
+        # Populate session state (replaces global store)
+        new_session_files = {
             "overview.md": final_state.get("overview", ""),
             "product_brief.md": final_state.get("product_brief", ""),
             "financial_model.md": final_state.get("business_model", ""),
@@ -733,20 +277,21 @@ def run_generation(idea: str, project_level: int):
             "deployment_guide.md": final_state.get("deployment_guide", "")
         }
         
-        # Save files using file manager
+        # Save files using file manager (for internal zip creation later)
         file_mgr = get_file_manager()
-        file_mgr.save_mvp_files(generated_content_store, idea)
+        # We don't necessarily need to call this here if we do it on download,
+        # but it warms up the cache/temp file.
+        # file_mgr.save_mvp_files(new_session_files, sanitized_idea)
         
         # Get logs from state
         history = final_state.get("status_history", [])
         
-        yield {
-            "status_html": format_log_entries(history),
-            "generate_btn": gr.Button(interactive=True),
-            # Update editor with overview
-            "code_editor": generated_content_store["overview.md"],
-            "file_list": gr.Radio(choices=list(generated_content_store.keys()), value="overview.md"),
-            "editor_link": gr.HTML(f"""
+        yield (
+            format_log_entries(history), # status_html
+            gr.Button(interactive=True), # generate_btn
+            new_session_files["overview.md"], # code_editor
+            gr.Radio(choices=list(new_session_files.keys()), value="overview.md"), # file_list
+            gr.HTML(f"""
                 <div style='background: #2a2d2e; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #89d185;'>
                     <p style='color: #89d185; margin: 0 0 10px 0; font-weight: bold;'>✅ Generation complete!</p>
                     <p style='color: #cccccc; margin: 0 0 10px 0;'>View your generated files in the editor:</p>
@@ -754,28 +299,44 @@ def run_generation(idea: str, project_level: int):
                         📝 Open Editor
                     </a>
                 </div>
-            """)
-        }
+            """), # editor_link
+            new_session_files, # session_files
+            session_id # session_id_state
+        )
+        return
 
-def load_file_content(filename: str):
+def load_file_content(filename: str, session_files: Dict[str, str]):
     """Load content into the editor when a file is selected."""
-    return generated_content_store.get(filename, "")
+    if session_files and filename in session_files:
+        return session_files[filename]
+    return ""
 
-def download_zip():
-    """Create ZIP and return path."""
+def download_zip(session_files: Dict[str, str], session_id: str):
+    """Create ZIP and return path for current session."""
     file_mgr = get_file_manager()
-    # Assuming files were already saved during generation
-    # We can trigger a re-zip or just point to the latest
-    # For simplicity, we'll implement a basic zip creation here if needed
-    # but the File Manager already handles it.
-    # We'll just return the path to the expected zip file.
-    # In a robust app, we'd track the specific run ID.
-    return "outputs/mvp_package.zip"
+    
+    idea = "mvp"
+    if session_id:
+        state_mgr = get_state_manager()
+        session = state_mgr.get_session(session_id)
+        if session:
+            idea = session.idea
+            
+    # Create ZIP from session files
+    result = file_mgr.save_mvp_files(session_files, idea)
+    zip_path = result.get("zip")
+    
+    if zip_path and os.path.exists(zip_path):
+        return zip_path
+    else:
+        return None  # Gradio will show error
 
 # Build UI
-with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0 - BMAD Edition", theme=gr.themes.Base()) as demo:
+with gr.Blocks(css=GLOBAL_CSS, title="MVP Agent v2.0 - BMAD Edition") as demo:
     
     # State for file content
+    session_files = gr.State(get_empty_state_files())
+    session_id_state = gr.State("")
     current_file = gr.State("overview.md")
     
     # Header
@@ -937,7 +498,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0 - BMAD Edition", theme=gr.t
                     gr.Markdown("---")
                     
                     file_list = gr.Radio(
-                        choices=list(generated_content_store.keys()),
+                        choices=list(get_empty_state_files().keys()),
                         value="overview.md",
                         label="Select File to View",
                         interactive=True,
@@ -951,7 +512,7 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0 - BMAD Edition", theme=gr.t
                 # Main Editor Area
                 with gr.Column(scale=4):
                     code_editor = gr.Code(
-                        value=generated_content_store["overview.md"],
+                        value=get_empty_state_files()["overview.md"],
                         language="markdown",
                         label="overview.md",
                         interactive=True, # Allow user to edit text
@@ -981,21 +542,21 @@ with gr.Blocks(css=CUSTOM_CSS, title="MVP Agent v2.0 - BMAD Edition", theme=gr.t
     # 1. File Selection
     file_list.change(
         fn=load_file_content,
-        inputs=[file_list],
+        inputs=[file_list, session_files],
         outputs=[code_editor]
     )
     
     # 2. Generation
     generate_btn.click(
         fn=run_generation,
-        inputs=[idea_input, project_level],
-        outputs=[status_html, generate_btn, code_editor, file_list, editor_link]
+        inputs=[idea_input, project_level, session_files],
+        outputs=[status_html, generate_btn, code_editor, file_list, editor_link, session_files, session_id_state]
     )
     
     # 3. Download
     dl_btn.click(
         fn=download_zip,
-        inputs=[],
+        inputs=[session_files, session_id_state],
         outputs=[zip_out]
     ).then(
         fn=lambda: gr.File(visible=True),

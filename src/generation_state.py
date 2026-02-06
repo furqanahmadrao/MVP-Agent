@@ -22,23 +22,31 @@ class GenerationSession:
     error: Optional[str] = None
     
 class GenerationStateManager:
-    """Thread-safe manager for generation sessions."""
+    """Thread-safe manager for generation sessions with fine-grained locking."""
     
     def __init__(self):
         self._sessions: Dict[str, GenerationSession] = {}
-        self._lock = threading.Lock()
+        self._session_locks: Dict[str, threading.Lock] = {}  # Per-session locks
+        self._global_lock = threading.Lock()  # For session creation/deletion
         self._current_session_id: Optional[str] = None
+    
+    def _get_session_lock(self, session_id: str) -> threading.Lock:
+        """Get or create a lock for a specific session."""
+        with self._global_lock:
+            if session_id not in self._session_locks:
+                self._session_locks[session_id] = threading.Lock()
+            return self._session_locks[session_id]
     
     def create_session(self, idea: str) -> str:
         """Create a new generation session and return its ID."""
         session_id = f"gen_{int(time.time() * 1000)}"
         
-        with self._lock:
+        with self._global_lock:
             session = GenerationSession(
                 session_id=session_id,
                 idea=idea,
                 files={
-                    "overview.md": "# Project Overview\n\n⏳ Generating...",
+                    "overview.md": "# Project Overview\\n\\n⏳ Generating...",
                     "product_brief.md": "⏳ Generating...",
                     "prd.md": "⏳ Generating...",
                     "architecture.md": "⏳ Generating...",
@@ -50,23 +58,36 @@ class GenerationStateManager:
                 }
             )
             self._sessions[session_id] = session
+            self._session_locks[session_id] = threading.Lock()
             self._current_session_id = session_id
         
         return session_id
     
     def get_session(self, session_id: str) -> Optional[GenerationSession]:
-        """Get a session by ID."""
-        with self._lock:
-            return self._sessions.get(session_id)
+        """Get a session by ID. Returns a shallow copy to prevent external mutation."""
+        from dataclasses import replace
+        with self._global_lock:
+            session = self._sessions.get(session_id)
+            if session:
+                # Shallow copy is faster and sufficient since we only want to prevent
+                # the UI from mutating the shared session object directly.
+                # We copy the mutable containers (dict, list).
+                return replace(
+                    session,
+                    files=session.files.copy(),
+                    logs=session.logs.copy()
+                )
+            return None
     
     def get_current_session_id(self) -> Optional[str]:
         """Get the current active session ID."""
-        with self._lock:
+        with self._global_lock:
             return self._current_session_id
     
     def update_status(self, session_id: str, status: str, progress: int = None, phase: str = None):
         """Update session status."""
-        with self._lock:
+        session_lock = self._get_session_lock(session_id)
+        with session_lock:
             session = self._sessions.get(session_id)
             if session:
                 session.status = status
@@ -77,14 +98,16 @@ class GenerationStateManager:
     
     def update_file(self, session_id: str, filename: str, content: str):
         """Update a file in the session."""
-        with self._lock:
+        session_lock = self._get_session_lock(session_id)
+        with session_lock:
             session = self._sessions.get(session_id)
             if session:
                 session.files[filename] = content
     
     def add_log(self, session_id: str, message: str, log_type: str = "INFO"):
         """Add a log entry to the session."""
-        with self._lock:
+        session_lock = self._get_session_lock(session_id)
+        with session_lock:
             session = self._sessions.get(session_id)
             if session:
                 session.logs.append({
@@ -95,40 +118,55 @@ class GenerationStateManager:
     
     def set_error(self, session_id: str, error: str):
         """Set an error on the session."""
-        with self._lock:
+        session_lock = self._get_session_lock(session_id)
+        with session_lock:
             session = self._sessions.get(session_id)
             if session:
                 session.status = "error"
                 session.error = error
-                self.add_log(session_id, f"Error: {error}", "ERROR")
+                session.logs.append({
+                    "timestamp": time.time(),
+                    "message": f"Error: {error}",
+                    "type": "ERROR"
+                })
     
     def complete_session(self, session_id: str, final_files: Dict[str, str]):
         """Mark session as complete and update all files."""
-        with self._lock:
+        session_lock = self._get_session_lock(session_id)
+        with session_lock:
             session = self._sessions.get(session_id)
             if session:
                 session.status = "completed"
                 session.progress = 100
                 session.files.update(final_files)
-                self.add_log(session_id, "🎉 Generation complete!", "SUCCESS")
+                session.logs.append({
+                    "timestamp": time.time(),
+                    "message": "🎉 Generation complete!",
+                    "type": "SUCCESS"
+                })
     
     def cleanup_old_sessions(self, max_age_seconds: int = 3600):
         """Clean up sessions older than max_age_seconds."""
         current_time = time.time()
-        with self._lock:
+        with self._global_lock:
             to_remove = [
                 sid for sid, session in self._sessions.items()
                 if current_time - session.start_time > max_age_seconds
             ]
             for sid in to_remove:
                 del self._sessions[sid]
+                if sid in self._session_locks:
+                    del self._session_locks[sid]
 
 # Singleton instance
 _state_manager = None
+_state_manager_lock = threading.Lock()
 
 def get_state_manager() -> GenerationStateManager:
     """Get the singleton state manager."""
     global _state_manager
     if _state_manager is None:
-        _state_manager = GenerationStateManager()
+        with _state_manager_lock:
+            if _state_manager is None:
+                _state_manager = GenerationStateManager()
     return _state_manager

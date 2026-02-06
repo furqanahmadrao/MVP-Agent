@@ -6,6 +6,7 @@ Persists settings to local storage (or .env for CLI).
 
 import os
 import json
+import threading
 from pathlib import Path
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
@@ -71,11 +72,14 @@ class SettingsManager:
 
 # Global instance
 _settings_manager = None
+_settings_manager_lock = threading.Lock()
 
 def get_settings_mgr() -> SettingsManager:
     global _settings_manager
     if _settings_manager is None:
-        _settings_manager = SettingsManager()
+        with _settings_manager_lock:
+            if _settings_manager is None:
+                _settings_manager = SettingsManager()
     return _settings_manager
 
 def create_settings_ui():

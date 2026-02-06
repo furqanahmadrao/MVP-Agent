@@ -4,7 +4,7 @@ import time
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, Tuple
 
 import requests
 
@@ -57,6 +57,8 @@ class MCPManager:
 
         # name -> subprocess.Popen
         self.procs: Dict[str, subprocess.Popen] = {}
+        # name -> file object (for logs)
+        self._log_files: Dict[str, Any] = {}
         self.started: bool = False
 
     def start_all(self) -> None:
@@ -99,7 +101,10 @@ class MCPManager:
             # Already running
             return
 
-        log_file = (LOGS_DIR / f"{cfg.name}.log").open("ab", buffering=0)
+        log_path = LOGS_DIR / f"{cfg.name}.log"
+        # Removed buffering=0 to avoid performance issues and syscall overhead
+        log_file = log_path.open("ab")
+        
         # Environment: inherit, but ensure we are in project root
         env = os.environ.copy()
         # Start subprocess in BASE_DIR so relative paths in run.py work
@@ -110,8 +115,9 @@ class MCPManager:
             stderr=subprocess.STDOUT,
         )
         self.procs[cfg.name] = proc
+        self._log_files[cfg.name] = log_file
 
-    def _wait_healthy(self, cfg: MCPConfig) -> (bool, str):
+    def _wait_healthy(self, cfg: MCPConfig) -> Tuple[bool, str]:
         """
         Poll server until healthy or timeout.
         """
@@ -171,27 +177,46 @@ class MCPManager:
 
     def stop_all(self) -> None:
         """
-        Terminate all MCP subprocesses gracefully.
+        Terminate all MCP subprocesses gracefully and clean up resources.
         """
+        if not self.procs:
+            return
+
+        # Phase 1: Send TERM signal
         for name, proc in list(self.procs.items()):
             try:
                 if proc.poll() is None:
+                    # print(f"[MCP] Terminating {name}...")
                     proc.terminate()
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[MCP] Error terminating {name}: {e}")
 
-        # Give them a moment to exit, then kill if needed
-        deadline = time.time() + 5
-        for name, proc in list(self.procs.items()):
-            if proc.poll() is None and time.time() < deadline:
-                time.sleep(0.2)
+        # Phase 2: Wait for graceful shutdown
+        # Allow 2 seconds per process max
+        deadline = time.time() + (2 * len(self.procs))
+        while time.time() < deadline:
+            all_stopped = all(p.poll() is not None for p in self.procs.values())
+            if all_stopped:
+                break
+            time.sleep(0.1)
 
+        # Phase 3: Force kill stragglers
         for name, proc in list(self.procs.items()):
             try:
                 if proc.poll() is None:
+                    print(f"[MCP] Force killing {name}...")
                     proc.kill()
+                    proc.wait(timeout=1)  # Reap zombie
+            except Exception as e:
+                print(f"[MCP] Error killing {name}: {e}")
+
+        # Phase 4: Close log file handles
+        for name, log_file in list(self._log_files.items()):
+            try:
+                log_file.close()
             except Exception:
                 pass
-
+        
+        self._log_files.clear()
         self.procs.clear()
         self.started = False

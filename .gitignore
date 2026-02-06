@@ -43,3 +43,7 @@ tests/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# User Settings (Sensitive)
+user_settings.json
+*.json
